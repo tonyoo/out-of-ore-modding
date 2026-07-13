@@ -6,8 +6,8 @@ UE4SS Lua mods, desktop **Mod Manager**, and a one-click **installer kit** for [
 
 1. Install **Out of Ore** from Steam (launch once).  
 2. Download the latest **Release** zip:  
-   **[OutOfOre-Modding-Kit](../../releases/latest)**  
-   (after the first release is published)  
+   **https://github.com/tonyoo/out-of-ore-modding/releases/latest**  
+   (asset: `OutOfOre-Modding-Kit-v1.0.zip`)
 3. Run **`Install Out of Ore Mods.exe`**  
 4. Point it at `...\steamapps\common\OutofOre`  
 5. Open **Out of Ore Mod Manager** → manage/pack/unpack mods  
