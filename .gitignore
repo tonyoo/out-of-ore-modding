@@ -1,0 +1,47 @@
+# Python / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+*.spec
+
+# PyInstaller workdirs inside tools
+tools/**/build/
+tools/**/dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs & dumps (never commit research dumps)
+*.log
+**/UE4SS.log
+**/UE4SS_ObjectDump.txt
+**/UUU_ObjectsDump.txt
+**/crash_*.dmp
+**/BP_Catalog.*
+**/BP_Actors.txt
+**/BP_Detail_*.txt
+
+# Local secrets
+.env
+*.pem
+
+# Release binaries (attach via GitHub Releases, not main branch)
+releases/*
+!releases/.gitkeep
+*.exe
+*.ooomod
+*.zip
+
+# Keep structure
+!tools/**/*.bat
+!tools/**/*.ps1
+!tools/**/*.py
+!tools/**/*.md
