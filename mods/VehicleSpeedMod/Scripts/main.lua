@@ -1,11 +1,12 @@
 --[[
-    VehicleSpeedMod for Out of Ore
+    VehicleSpeedMod for Out of Ore (anti-stack rewrite)
 
-    AVS_SuperVehicleBase machines use gear tables (EndSpeed/MaxTorque).
-    We:
-      1) Find vehicles reliably (FindAllOf + ForEachUObject fallback)
-      2) Set AVS props from ORIGINAL * multiplier (no stacking)
-      3) Optionally scale gear structs once per vehicle/preset
+    Fixes "multiple presets stacking" when cycling:
+      - Only ONE background LoopAsync (shared flag)
+      - Keybind debounce (ignore rapid repeat)
+      - Preset change = restore stock originals FIRST, then apply new mult
+      - Gear snaps captured once; never re-snapshot modified gears
+      - Interval apply only reasserts current preset (idempotent)
 ]]
 
 local UEHelpers = require("UEHelpers")
@@ -13,10 +14,20 @@ require("config")
 
 local Config = VehicleSpeedConfig or {}
 local GlobalAr = nil
-local OriginalCache = {} -- [addr] = { originals={}, gears={}, classShort= }
-local GearKey = {}       -- [addr..preset] = true after gear scale
-local ApplyLoopStarted = false
+
+-- Per-vehicle cache: originals (stock numbers) + gear snaps (stock gear fields)
+local OriginalCache = {}
+
+-- Track what we last applied so we don't thrash / double-feel
+local LastApplied = {
+    preset = nil,
+    generation = 0,
+}
+
 local PresetGeneration = 0
+local LastCycleMs = 0
+local CYCLE_DEBOUNCE_MS = 400
+local Applying = false -- re-entrancy guard
 
 local PropMap = {
     max_speed_limit = "MaxSpeedLimit",
@@ -54,6 +65,11 @@ local DefaultFloors = {
     MaxAccs = 6,
 }
 
+local GEAR_FIELDS = {
+    "EndSpeed", "StartSpeed", "UpShift", "DownShift",
+    "MaxTorque", "MinTorque", "HighRPM", "LowRPM",
+}
+
 local function Log(msg)
     local line = "[VehicleSpeedMod] " .. tostring(msg)
     print(line .. "\n")
@@ -62,12 +78,36 @@ local function Log(msg)
     end
 end
 
+local function NowMs()
+    -- os.clock is seconds of CPU time; fine for debounce
+    return math.floor(os.clock() * 1000)
+end
+
 local function WithAr(Ar, fn)
     GlobalAr = Ar
     local ok, err = pcall(fn)
     GlobalAr = nil
     if not ok then Log("Error: " .. tostring(err)) end
     return true
+end
+
+local function SharedGet(key)
+    local ok, v = pcall(function()
+        if ModRef and ModRef.GetSharedVariable then
+            return ModRef:GetSharedVariable(key)
+        end
+        return nil
+    end)
+    if ok then return v end
+    return nil
+end
+
+local function SharedSet(key, value)
+    pcall(function()
+        if ModRef and ModRef.SetSharedVariable then
+            ModRef:SetSharedVariable(key, value)
+        end
+    end)
 end
 
 local function ReloadConfig()
@@ -81,7 +121,7 @@ local function ReloadConfig()
         return false
     end
     PresetGeneration = PresetGeneration + 1
-    GearKey = {}
+    LastApplied.preset = nil
     Log("Config reloaded enabled=" .. tostring(Config.enabled) ..
         " preset=" .. tostring(Config.active_preset) ..
         " scale_gears=" .. tostring(Config.scale_gears))
@@ -90,7 +130,7 @@ end
 
 local function GetPresetOrder()
     if type(Config.presets) ~= "table" then return {} end
-    local preferred = { "vanilla", "sport", "insane" }
+    local preferred = { "vanilla", "sport", "insane", "insane+" }
     local order, seen = {}, {}
     for _, n in ipairs(preferred) do
         if Config.presets[n] then table.insert(order, n); seen[n] = true end
@@ -110,6 +150,14 @@ local function GetFeel()
     local speed = tonumber(p.top_speed_forward) or tonumber(p.max_speed_limit) or 1.0
     local power = tonumber(p.drive_torque_multiplier) or tonumber(p.engine_power) or speed
     local accel = tonumber(p.max_acceleration) or power
+    if speed < 0.1 then speed = 0.1 end
+    if power < 0.1 then power = 0.1 end
+    if accel < 0.1 then accel = 0.1 end
+    -- Allow extreme presets like insane+ (100x); still clamp absurd typos
+    local maxMult = 200
+    if speed > maxMult then speed = maxMult end
+    if power > maxMult then power = maxMult end
+    if accel > maxMult then accel = maxMult end
     return { name = name, speed = speed, power = power, accel = accel, raw = p }
 end
 
@@ -117,8 +165,11 @@ local function GetMults(classShort)
     local feel = GetFeel()
     local p = feel.raw
     local mult = {}
+    local maxMult = 200
     for key, _ in pairs(PropMap) do
         mult[key] = tonumber(p[key]) or 1.0
+        if mult[key] > maxMult then mult[key] = maxMult end
+        if mult[key] < 0.1 then mult[key] = 0.1 end
     end
     if not p.max_speed_limit then mult.max_speed_limit = feel.speed end
     if not p.target_speed then mult.target_speed = feel.speed end
@@ -133,7 +184,9 @@ local function GetMults(classShort)
     local ov = Config.class_overrides
     if type(ov) == "table" and classShort and ov[classShort] then
         for k, v in pairs(ov[classShort]) do
-            if PropMap[k] then mult[k] = tonumber(v) or mult[k] end
+            if PropMap[k] then
+                mult[k] = tonumber(v) or mult[k]
+            end
         end
     end
     return mult, feel
@@ -182,26 +235,98 @@ local function EnsureCache(obj)
             originals = {},
             gears = {},
             classShort = GetClassShort(obj),
+            lastPreset = nil,
         }
     end
     return OriginalCache[addr], addr
 end
 
-local function CacheProp(obj, prop)
+--- Capture stock prop once. Never overwrite an existing original.
+local function CachePropOnce(obj, prop)
     local cache = EnsureCache(obj)
     if not cache then return end
-    if cache.originals[prop] == nil then
-        local v = ReadNum(obj, prop)
-        if v ~= nil then cache.originals[prop] = v end
+    if cache.originals[prop] ~= nil then return end
+    local v = ReadNum(obj, prop)
+    if v ~= nil then
+        cache.originals[prop] = v
     end
 end
 
-local function ApplyProps(obj, mult)
+--- Capture stock gear tables once (numeric copies only).
+local function CacheGearsOnce(obj, addr)
+    local cache = OriginalCache[addr]
+    if not cache then return end
+
+    for _, arrayName in ipairs({ "Gears", "Gears_Reverse" }) do
+        if cache.gears[arrayName] then
+            goto continue
+        end
+        pcall(function()
+            local arr = obj[arrayName]
+            if arr == nil or not arr.GetArrayNum then return end
+            local num = arr:GetArrayNum()
+            if num <= 0 then return end
+
+            cache.gears[arrayName] = {}
+            for i = 1, num do
+                local g = arr[i]
+                if g then
+                    local snap = {}
+                    for _, f in ipairs(GEAR_FIELDS) do
+                        local v = nil
+                        pcall(function() v = g[f] end)
+                        if type(v) == "number" then
+                            snap[f] = v
+                        end
+                    end
+                    cache.gears[arrayName][i] = snap
+                end
+            end
+            if Config.log_applies then
+                Log(string.format("  stock-cached %s gears=%d", arrayName, num))
+            end
+        end)
+        ::continue::
+    end
+end
+
+--- Restore stock props + gears (no multipliers).
+local function RestoreVehicle(obj)
+    local cache, addr = EnsureCache(obj)
+    if not cache or not addr then return 0 end
+    local n = 0
+
+    for prop, orig in pairs(cache.originals) do
+        if WriteNum(obj, prop, orig) then n = n + 1 end
+    end
+
+    for arrayName, gears in pairs(cache.gears) do
+        pcall(function()
+            local arr = obj[arrayName]
+            if not arr then return end
+            for i, snap in pairs(gears) do
+                local g = arr[i]
+                if g and snap then
+                    for f, val in pairs(snap) do
+                        pcall(function() g[f] = val end)
+                        n = n + 1
+                    end
+                end
+            end
+        end)
+    end
+
+    cache.lastPreset = "vanilla_base"
+    return n
+end
+
+local function ApplyPropsFromOriginals(obj, mult)
     local n = 0
     local cache = EnsureCache(obj)
     if not cache then return 0 end
+
     for key, prop in pairs(PropMap) do
-        CacheProp(obj, prop)
+        CachePropOnce(obj, prop)
         local original = cache.originals[prop]
         if original ~= nil then
             local base = Floor(prop, original)
@@ -210,7 +335,7 @@ local function ApplyProps(obj, mult)
             if WriteNum(obj, prop, target) then
                 n = n + 1
                 if Config.log_applies then
-                    Log(string.format("  %s: %.3f -> %.3f (x%.2f)", prop, original, target, m))
+                    Log(string.format("  %s: stock=%.3f -> %.3f (x%.2f)", prop, original, target, m))
                 end
             end
         end
@@ -218,78 +343,42 @@ local function ApplyProps(obj, mult)
     return n
 end
 
-local function ScaleGearArray(obj, arrayName, feel, addr)
+local function ApplyGearsFromOriginals(obj, feel, addr)
+    if Config.scale_gears ~= true then return 0 end
     local cache = OriginalCache[addr]
     if not cache then return 0 end
+
+    CacheGearsOnce(obj, addr)
     local total = 0
 
-    local ok = pcall(function()
-        local arr = obj[arrayName]
-        if arr == nil then return end
-
-        local num = 0
-        pcall(function()
-            if arr.GetArrayNum then num = arr:GetArrayNum() end
-        end)
-        if num <= 0 then return end
-
-        if not cache.gears[arrayName] then
-            cache.gears[arrayName] = {}
-            for i = 1, num do
-                local g = arr[i]
-                if g then
-                    local snap = {}
-                    for _, f in ipairs({
-                        "EndSpeed", "StartSpeed", "UpShift", "DownShift",
-                        "MaxTorque", "MinTorque", "HighRPM", "LowRPM"
-                    }) do
-                        local v = nil
-                        pcall(function() v = g[f] end)
-                        if type(v) == "number" then snap[f] = v end
-                    end
-                    cache.gears[arrayName][i] = snap
-                end
-            end
-            if Config.log_applies then
-                Log(string.format("  cached %s gears=%d", arrayName, num))
-            end
-        end
-
-        for i = 1, num do
-            local g = arr[i]
-            local snap = cache.gears[arrayName][i]
-            if g and snap then
-                local function set(field, m)
-                    if snap[field] ~= nil and m then
-                        local nv = snap[field] * m
-                        pcall(function() g[field] = nv end)
-                        total = total + 1
+    for _, arrayName in ipairs({ "Gears", "Gears_Reverse" }) do
+        local snaps = cache.gears[arrayName]
+        if snaps then
+            pcall(function()
+                local arr = obj[arrayName]
+                if not arr then return end
+                for i, snap in pairs(snaps) do
+                    local g = arr[i]
+                    if g and snap then
+                        local function set(field, m)
+                            if snap[field] ~= nil and m then
+                                pcall(function() g[field] = snap[field] * m end)
+                                total = total + 1
+                            end
+                        end
+                        set("EndSpeed", feel.speed)
+                        set("StartSpeed", feel.speed)
+                        set("UpShift", feel.speed)
+                        set("DownShift", feel.speed)
+                        set("MaxTorque", feel.power)
+                        set("MinTorque", feel.power)
+                        -- do NOT scale HighRPM/LowRPM (was making shift feel stack weirdly)
                     end
                 end
-                set("EndSpeed", feel.speed)
-                set("StartSpeed", feel.speed)
-                set("UpShift", feel.speed)
-                set("DownShift", feel.speed)
-                set("MaxTorque", feel.power)
-                set("MinTorque", feel.power)
-            end
+            end)
         end
-    end)
-
-    if not ok then return 0 end
+    end
     return total
-end
-
-local function ScaleGears(obj, feel, addr, force)
-    if Config.scale_gears ~= true then return 0 end
-    local gkey = tostring(addr) .. ":" .. tostring(feel.name) .. ":" .. tostring(PresetGeneration)
-    if GearKey[gkey] and not force then return 0 end
-
-    local n = 0
-    n = n + ScaleGearArray(obj, "Gears", feel, addr)
-    n = n + ScaleGearArray(obj, "Gears_Reverse", feel, addr)
-    if n > 0 then GearKey[gkey] = true end
-    return n
 end
 
 local function IsVehicleClassName(short)
@@ -306,7 +395,6 @@ local function LooksLikeVehicle(obj)
     if not obj or not obj:IsValid() then return false end
     local short = GetClassShort(obj)
     if IsVehicleClassName(short) then return true end
-    -- Property probe only for vehicle-ish names
     if short and short:find("Vehicle", 1, true)
         and not short:find("Widget")
         and not short:find("^W_")
@@ -335,16 +423,12 @@ local function CollectVehicles()
 
     local names = {
         "AVS_SuperVehicleBase_C",
-        "AVS_SuperVehicleBase",
         "AVS_Base_C",
-        "AVS_Base",
         "AVS_Vehicle_C",
-        "AVS_Vehicle",
         "BP_VehicleBase_C",
         "V_TruckBase_C",
         "V_SemiTruckBase_C",
         "V_PaverBase_C",
-        "VehicleSystemBase",
     }
 
     for _, name in ipairs(names) do
@@ -354,30 +438,21 @@ local function CollectVehicles()
                 for _, o in ipairs(found) do add(o) end
             end
         end)
-        pcall(function()
-            add(FindFirstOf(name))
-        end)
     end
 
-    -- Controller refs
     pcall(function()
         local pc = UEHelpers.GetPlayerController()
         if pc and pc:IsValid() then
             pcall(function() add(pc.NewVehiclePawn) end)
             pcall(function() add(pc.Pawn) end)
-            pcall(function() add(pc.AcknowledgedPawn) end)
         end
     end)
-    pcall(function() add(UEHelpers.GetPlayer()) end)
 
-    -- Fallback: scan all UObjects for SuperVehicle classes (slower, reliable)
     if #list == 0 then
         pcall(function()
             ForEachUObject(function(obj)
                 local short = GetClassShort(obj)
-                if IsVehicleClassName(short) then
-                    add(obj)
-                end
+                if IsVehicleClassName(short) then add(obj) end
             end)
         end)
     end
@@ -385,99 +460,108 @@ local function CollectVehicles()
     return list
 end
 
-local function ApplyToVehicle(obj, forceGears)
+--- Core apply: ALWAYS stock → mult (restore then apply when preset changes)
+local function ApplyToVehicle(obj, forceRestore)
     local short = GetClassShort(obj) or "?"
     local mult, feel = GetMults(short)
     local cache, addr = EnsureCache(obj)
     if not addr then return 0, 0 end
 
-    if Config.log_applies then
-        Log("Apply -> " .. short)
+    -- Capture stock first time we see this vehicle (before writing)
+    for _, prop in pairs(PropMap) do
+        CachePropOnce(obj, prop)
+    end
+    CacheGearsOnce(obj, addr)
+
+    local needRestore = forceRestore
+        or cache.lastPreset == nil
+        or cache.lastPreset ~= feel.name
+
+    if needRestore then
+        RestoreVehicle(obj)
     end
 
-    local props = ApplyProps(obj, mult)
-    local gears = ScaleGears(obj, feel, addr, forceGears == true)
+    if Config.log_applies then
+        Log(string.format("Apply -> %s preset=%s restore=%s", short, feel.name, tostring(needRestore)))
+    end
+
+    local props = ApplyPropsFromOriginals(obj, mult)
+    local gears = ApplyGearsFromOriginals(obj, feel, addr)
+    cache.lastPreset = feel.name
     return props, gears
 end
 
-local function ApplyAll(forceGears)
+local function ApplyAll(forceRestore)
     if Config.enabled == false then
-        Log("enabled=false (set enabled=true in config.lua)")
         return 0, 0, 0
     end
-    local vehicles = CollectVehicles()
-    local tp, tg = 0, 0
-    for _, v in ipairs(vehicles) do
-        local p, g = ApplyToVehicle(v, forceGears)
-        tp = tp + p
-        tg = tg + g
+    if Applying then
+        return 0, 0, 0
     end
-    return #vehicles, tp, tg
+    Applying = true
+
+    local nv, tp, tg = 0, 0, 0
+    local ok, err = pcall(function()
+        local vehicles = CollectVehicles()
+        nv = #vehicles
+        local feel = GetFeel()
+        for _, v in ipairs(vehicles) do
+            local p, g = ApplyToVehicle(v, forceRestore == true)
+            tp = tp + p
+            tg = tg + g
+        end
+        LastApplied.preset = feel.name
+        LastApplied.generation = PresetGeneration
+    end)
+
+    Applying = false
+    if not ok then
+        Log("ApplyAll error: " .. tostring(err))
+    end
+    return nv, tp, tg
 end
 
 local function ResetAll()
     local n = 0
     for _, v in ipairs(CollectVehicles()) do
-        local addr = GetAddr(v)
-        local cache = addr and OriginalCache[addr]
-        if cache and cache.originals then
-            for prop, orig in pairs(cache.originals) do
-                if WriteNum(v, prop, orig) then n = n + 1 end
-            end
-        end
-        if cache and cache.gears then
-            for arrayName, gears in pairs(cache.gears) do
-                pcall(function()
-                    local arr = v[arrayName]
-                    if not arr then return end
-                    for i, snap in pairs(gears) do
-                        local g = arr[i]
-                        if g and snap then
-                            for f, val in pairs(snap) do
-                                pcall(function() g[f] = val end)
-                                n = n + 1
-                            end
-                        end
-                    end
-                end)
-            end
-        end
+        n = n + RestoreVehicle(v)
+        local cache = EnsureCache(v)
+        if cache then cache.lastPreset = nil end
     end
-    GearKey = {}
+    LastApplied.preset = nil
     return n
 end
 
 local function PrintStatus()
     local feel = GetFeel()
     Log("=== VehicleSpeedMod ===")
-    Log(string.format("enabled=%s preset=%s speed_x=%.2f power_x=%.2f scale_gears=%s",
-        tostring(Config.enabled), feel.name, feel.speed, feel.power, tostring(Config.scale_gears)))
+    Log(string.format("enabled=%s active_preset=%s speed_x=%.2f power_x=%.2f",
+        tostring(Config.enabled), feel.name, feel.speed, feel.power))
+    Log(string.format("last_applied_preset=%s scale_gears=%s",
+        tostring(LastApplied.preset), tostring(Config.scale_gears)))
 
     local vehicles = CollectVehicles()
     Log("vehicles found: " .. tostring(#vehicles))
-
     if #vehicles == 0 then
-        Log("No vehicles in memory. Enter/spawn a machine in the world, then run vehiclespeed_apply")
+        Log("Enter/spawn a machine, then vehiclespeed_apply")
         return
     end
 
     for i, v in ipairs(vehicles) do
-        if i > 8 then
-            Log("... +" .. tostring(#vehicles - 8) .. " more")
+        if i > 6 then
+            Log("... +" .. tostring(#vehicles - 6) .. " more")
             break
         end
         local short = GetClassShort(v) or "?"
-        Log(string.format("[%d] %s", i, short))
-        for _, prop in ipairs({
-            "MaxSpeedLimit", "DynamicMaxTorque", "TargetAcceleration",
-            "TopSpeedF", "HighGearSpeed", "EnginePower"
-        }) do
+        local addr = GetAddr(v)
+        local cache = addr and OriginalCache[addr]
+        Log(string.format("[%d] %s last=%s", i, short, tostring(cache and cache.lastPreset)))
+        for _, prop in ipairs({ "MaxSpeedLimit", "DynamicMaxTorque", "TopSpeedF" }) do
             local val = ReadNum(v, prop)
             if val ~= nil then
-                local addr = GetAddr(v)
-                local orig = addr and OriginalCache[addr] and OriginalCache[addr].originals[prop]
+                local orig = cache and cache.originals[prop]
                 if orig then
-                    Log(string.format("    %s=%.3f (orig %.3f)", prop, val, orig))
+                    Log(string.format("    %s=%.3f (stock %.3f)", prop, val, orig))
                 else
                     Log(string.format("    %s=%.3f", prop, val))
                 end
@@ -490,8 +574,9 @@ local function PrintStatus()
                 local es, mt
                 pcall(function() es = g.EndSpeed end)
                 pcall(function() mt = g.MaxTorque end)
-                Log(string.format("    Gears[1] EndSpeed=%s MaxTorque=%s (count=%d)",
-                    tostring(es), tostring(mt), arr:GetArrayNum()))
+                local stockEs = cache and cache.gears and cache.gears.Gears and cache.gears.Gears[1] and cache.gears.Gears[1].EndSpeed
+                Log(string.format("    Gears[1] EndSpeed=%s (stock %s) MaxTorque=%s",
+                    tostring(es), tostring(stockEs), tostring(mt)))
             end
         end)
     end
@@ -502,18 +587,28 @@ local function SetPreset(name)
         Log("Unknown preset. Available: " .. table.concat(GetPresetOrder(), ", "))
         return
     end
+
+    -- Same preset already applied? Still force restore+apply for consistency
     Config.active_preset = name
     if VehicleSpeedConfig then VehicleSpeedConfig.active_preset = name end
     PresetGeneration = PresetGeneration + 1
-    GearKey = {}
+
+    -- CRITICAL: always restore stock first when switching presets
     local nv, np, ng = ApplyAll(true)
-    Log(string.format("preset=%s vehicles=%d props=%d gearFields=%d", name, nv, np, ng))
+    Log(string.format("preset=%s vehicles=%d props=%d gears=%d (restored stock then applied once)",
+        name, nv, np, ng))
     if nv == 0 then
         Log("TIP: get in a vehicle / load a world first, then vehiclespeed_apply")
     end
 end
 
 local function CyclePreset(dir)
+    local now = NowMs()
+    if (now - LastCycleMs) < CYCLE_DEBOUNCE_MS then
+        return -- ignore double keybind / multi-handler fire
+    end
+    LastCycleMs = now
+
     local order = GetPresetOrder()
     if #order == 0 then return end
     local idx = 1
@@ -545,7 +640,6 @@ end)
 
 RegisterConsoleCommandHandler("vehiclespeed_apply", function(_, _, Ar)
     return WithAr(Ar, function()
-        GearKey = {}
         local nv, np, ng = ApplyAll(true)
         Log(string.format("Applied vehicles=%d props=%d gears=%d", nv, np, ng))
     end)
@@ -553,7 +647,8 @@ end)
 
 RegisterConsoleCommandHandler("vehiclespeed_reset", function(_, _, Ar)
     return WithAr(Ar, function()
-        Log("Restored " .. tostring(ResetAll()) .. " fields")
+        Log("Restored " .. tostring(ResetAll()) .. " stock fields (vanilla baseline)")
+        LastApplied.preset = nil
     end)
 end)
 
@@ -563,11 +658,11 @@ RegisterConsoleCommandHandler("vehiclespeed_enable", function(_, Parameters, Ar)
         if a == "0" or a == "off" or a == "false" then
             Config.enabled = false
             if VehicleSpeedConfig then VehicleSpeedConfig.enabled = false end
-            Log("Disabled")
+            ResetAll()
+            Log("Disabled + restored stock values")
         elseif a == "1" or a == "on" or a == "true" then
             Config.enabled = true
             if VehicleSpeedConfig then VehicleSpeedConfig.enabled = true end
-            GearKey = {}
             local nv, np, ng = ApplyAll(true)
             Log(string.format("Enabled vehicles=%d props=%d gears=%d", nv, np, ng))
         else
@@ -578,71 +673,97 @@ end)
 
 RegisterConsoleCommandHandler("vehiclespeed_help", function(_, _, Ar)
     return WithAr(Ar, function()
-        Log("vehiclespeed_status | apply | preset sport|insane|vanilla | reload | enable 0|1 | reset")
-        Log("Keybinds: Ctrl+Shift+Left/Right cycle, Ctrl+Shift+V status")
-        Log("Must be IN WORLD with vehicles spawned. Main menu = 0 vehicles.")
+        Log("vehiclespeed_status | apply | preset vanilla|sport|insane|insane+ | reload | enable 0|1 | reset")
+        Log("Preset changes RESTORE stock first, then apply once (no stacking).")
+        Log("insane+ = 100x — extreme; may break physics. Keys: Ctrl+Shift+Left/Right, Ctrl+Shift+V")
     end)
 end)
 
-local kb = Config.keybinds or {}
-if kb.next_preset ~= false and not IsKeyBindRegistered(Key.RIGHT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }) then
-    RegisterKeyBind(Key.RIGHT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
-        ExecuteInGameThread(function() CyclePreset(1) end)
-    end)
-end
-if kb.prev_preset ~= false and not IsKeyBindRegistered(Key.LEFT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }) then
-    RegisterKeyBind(Key.LEFT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
-        ExecuteInGameThread(function() CyclePreset(-1) end)
-    end)
-end
-if kb.status ~= false and not IsKeyBindRegistered(Key.V, { ModifierKey.CONTROL, ModifierKey.SHIFT }) then
-    RegisterKeyBind(Key.V, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
-        ExecuteInGameThread(function() PrintStatus() end)
-    end)
+-- Keybinds: only register once per process via shared flag
+local function RegisterBindsOnce()
+    if SharedGet("VehicleSpeedMod_Binds") == true then
+        Log("Keybinds already registered (skipping duplicate)")
+        return
+    end
+    local kb = Config.keybinds or {}
+    if kb.next_preset ~= false then
+        RegisterKeyBind(Key.RIGHT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
+            ExecuteInGameThread(function() CyclePreset(1) end)
+        end)
+    end
+    if kb.prev_preset ~= false then
+        RegisterKeyBind(Key.LEFT_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
+            ExecuteInGameThread(function() CyclePreset(-1) end)
+        end)
+    end
+    if kb.status ~= false then
+        RegisterKeyBind(Key.V, { ModifierKey.CONTROL, ModifierKey.SHIFT }, function()
+            ExecuteInGameThread(function() PrintStatus() end)
+        end)
+    end
+    SharedSet("VehicleSpeedMod_Binds", true)
 end
 
-local function StartLoop()
-    if ApplyLoopStarted then return end
-    ApplyLoopStarted = true
-    local ms = math.floor((tonumber(Config.apply_interval_seconds) or 4) * 1000)
-    if ms < 2000 then ms = 2000 end
+local function StartLoopOnce()
+    if SharedGet("VehicleSpeedMod_Loop") == true then
+        Log("Apply loop already running (skipping duplicate LoopAsync)")
+        return
+    end
+    SharedSet("VehicleSpeedMod_Loop", true)
+
+    local ms = math.floor((tonumber(Config.apply_interval_seconds) or 5) * 1000)
+    if ms < 3000 then ms = 3000 end
+
     LoopAsync(ms, function()
         pcall(function()
-            if Config.enabled ~= false then
-                ApplyAll(false)
-            end
+            if Config.enabled == false then return end
+            -- Soft reassert current preset only (no extra restore unless needed)
+            ApplyAll(false)
         end)
         return false
     end)
+    Log("Started single apply loop every " .. tostring(ms) .. "ms")
 end
 
-RegisterLoadMapPostHook(function()
-    ExecuteInGameThread(function()
-        ExecuteWithDelay(3000, function()
-            if Config.enabled == false then return end
-            GearKey = {}
-            local nv, np, ng = ApplyAll(true)
-            Log(string.format("Map load: vehicles=%d props=%d gears=%d", nv, np, ng))
+-- Map load: only one hook registration flag
+if SharedGet("VehicleSpeedMod_MapHook") ~= true then
+    SharedSet("VehicleSpeedMod_MapHook", true)
+    RegisterLoadMapPostHook(function()
+        ExecuteInGameThread(function()
+            ExecuteWithDelay(3000, function()
+                if Config.enabled == false then return end
+                local nv, np, ng = ApplyAll(true)
+                Log(string.format("Map load: vehicles=%d props=%d gears=%d", nv, np, ng))
+            end)
         end)
     end)
-end)
+end
 
-pcall(function()
-    NotifyOnNewObject("/Game/Vehicles/AVS_SuperVehicleBase.AVS_SuperVehicleBase_C", function(obj)
-        ExecuteWithDelay(1200, function()
-            if Config.enabled == false then return end
-            if obj and obj:IsValid() then
-                local p, g = ApplyToVehicle(obj, true)
-                Log(string.format("New vehicle: props=%d gears=%d (%s)", p, g, tostring(GetClassShort(obj))))
-            end
+if SharedGet("VehicleSpeedMod_NewObj") ~= true then
+    SharedSet("VehicleSpeedMod_NewObj", true)
+    pcall(function()
+        NotifyOnNewObject("/Game/Vehicles/AVS_SuperVehicleBase.AVS_SuperVehicleBase_C", function(obj)
+            ExecuteWithDelay(1500, function()
+                if Config.enabled == false then return end
+                if obj and obj:IsValid() then
+                    -- New vehicle: capture stock then apply current preset once
+                    local p, g = ApplyToVehicle(obj, true)
+                    if Config.log_applies then
+                        Log(string.format("New vehicle: props=%d gears=%d (%s)",
+                            p, g, tostring(GetClassShort(obj))))
+                    end
+                end
+            end)
         end)
     end)
-end)
+end
 
-Log(string.format("Loaded. enabled=%s preset=%s scale_gears=%s",
+RegisterBindsOnce()
+StartLoopOnce()
+
+Log(string.format("Loaded (anti-stack). enabled=%s preset=%s scale_gears=%s",
     tostring(Config.enabled), tostring(Config.active_preset), tostring(Config.scale_gears)))
-Log("In-world: vehiclespeed_status then vehiclespeed_preset sport")
-StartLoop()
+Log("Cycling presets restores stock first, then applies one mult. Debounced keys.")
 
 ExecuteInGameThread(function()
     ExecuteWithDelay(5000, function()

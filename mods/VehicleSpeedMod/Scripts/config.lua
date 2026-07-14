@@ -1,45 +1,39 @@
 --[[
     VehicleSpeedMod configuration
+    Edit, then: vehiclespeed_reload  (or restart game)
 
-    If storage containers / world interact break:
-      1) Set enabled = false
-      2) Restart game and reload an earlier save if needed
-
-    scale_gears = true can break some machines; leave false unless testing.
+    Multipliers are relative to STOCK (vanilla).
+    Cycling presets always restores stock first, then applies ONE mult.
 ]]
 
 VehicleSpeedConfig = {
-    -- DEFAULT OFF until vehicle tuning is proven safe in your save.
-    -- Set true when you want speed mods again.
-    enabled = false,
-
+    enabled = true,
     active_preset = "sport",
     apply_interval_seconds = 5,
-    log_applies = false,
+    log_applies = false, -- set true only while debugging
 
-    -- Dangerous on some vehicles; leave false
-    scale_gears = false,
+    scale_gears = true,
 
     keybinds = {
-        next_preset = true,
-        prev_preset = true,
-        status = true,
+        next_preset = true, -- Ctrl+Shift+Right (debounced)
+        prev_preset = true, -- Ctrl+Shift+Left
+        status = true,      -- Ctrl+Shift+V
     },
 
     absolute_floors = {
-        MaxSpeedLimit = 100,
-        DynamicMaxTorque = 4000,
-        TargetAcceleration = 10,
-        TargetSpeed = 100,
-        VehicleMaxAngularVelocity = 15,
-        IdleMaxRPM = 2800,
-        TopSpeedF = 50,
-        TopSpeedR = 25,
-        HighGearSpeed = 50,
-        LowGearSpeed = 25,
-        EnginePower = 150,
+        MaxSpeedLimit = 80,
+        DynamicMaxTorque = 3500,
+        TargetAcceleration = 8,
+        TargetSpeed = 80,
+        VehicleMaxAngularVelocity = 12,
+        IdleMaxRPM = 2600,
+        TopSpeedF = 45,
+        TopSpeedR = 22,
+        HighGearSpeed = 45,
+        LowGearSpeed = 22,
+        EnginePower = 120,
         DriveTorqMultiplier = 1,
-        MaxAccs = 8,
+        MaxAccs = 6,
     },
 
     presets = {
@@ -68,14 +62,29 @@ VehicleSpeedConfig = {
             max_speed_limit = 1.5,
         },
         insane = {
-            top_speed_forward = 10.5,
+            top_speed_forward = 2.5,
             top_speed_reverse = 2.0,
-            high_gear_speed = 10.5,
+            high_gear_speed = 2.5,
             low_gear_speed = 2.0,
-            max_acceleration = 8.0,
-            engine_power = 10.5,
-            drive_torque_multiplier = 15.5,
-            max_speed_limit = 10.5,
+            max_acceleration = 2.0,
+            engine_power = 2.2,
+            drive_torque_multiplier = 2.2,
+            max_speed_limit = 2.5,
+        },
+        -- WARNING: extreme. Can break physics / control. Cycle carefully.
+        ["insane+"] = {
+            top_speed_forward = 100.0,
+            top_speed_reverse = 100.0,
+            high_gear_speed = 100.0,
+            low_gear_speed = 100.0,
+            gear_ratio_forward = 100.0,
+            gear_ratio_reverse = 100.0,
+            drivetrain_gear_modifier = 100.0,
+            max_acceleration = 100.0,
+            engine_power = 100.0,
+            drive_torque_multiplier = 100.0,
+            brake_force = 10.0, -- a bit more brake so you can still stop sometimes
+            max_speed_limit = 100.0,
         },
     },
 

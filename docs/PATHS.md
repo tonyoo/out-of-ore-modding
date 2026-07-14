@@ -100,16 +100,11 @@ Stock UE4SS (keep):
 | Rebuild kit | `...\OutOfOreModManager\Rebuild Kit.bat` |
 | Assemble script | `...\OutOfOreModManager\assemble_kit.ps1` |
 
-## This documentation pack / git monorepo
+## This documentation pack
 
 | Item | Path |
 |------|------|
-| AI handoff (original) | `D:\OpenCode\Grok Out Of ore` |
-| **Git monorepo (source of truth)** | `D:\OpenCode\out-of-ore-modding` |
-| Mods in repo | `D:\OpenCode\out-of-ore-modding\mods\` |
-| Manager source | `D:\OpenCode\out-of-ore-modding\tools\mod-manager\` |
-| Installer source | `D:\OpenCode\out-of-ore-modding\tools\installer\` |
-| Deploy script | `D:\OpenCode\out-of-ore-modding\scripts\deploy_to_game.ps1` |
+| AI handoff root | `D:\OpenCode\Grok Out Of ore` |
 
 ## Desktop shortcuts (user machine)
 

@@ -59,15 +59,15 @@ Always re-read live `mods.txt` — user may change it.
 
 **Config keys:**
 
-- Presets: `vanilla`, `sport`, `insane`  
+- Presets: `vanilla`, `sport`, `insane`, **`insane+` (100× — extreme)**  
 - `scale_gears` — scale gear table fields  
 - `absolute_floors` — when values are 0  
 
 **Commands:** `vehiclespeed_status`, `vehiclespeed_apply`, `vehiclespeed_preset`, `vehiclespeed_reload`, `vehiclespeed_enable`, `vehiclespeed_reset`, `vehiclespeed_help`  
 
-**Keybinds:** Ctrl+Shift+Left/Right cycle; Ctrl+Shift+V status  
+**Keybinds:** Ctrl+Shift+Left/Right cycle (debounced); Ctrl+Shift+V status  
 
-**History:** Earlier builds re-multiplied torque every tick → broke interact/storage. Safe build caches originals. Throttle RegisterHook often failed to attach early; gear scaling + props are the main path.
+**History:** Earlier builds re-multiplied torque every tick → broke interact/storage. Later, cycling presets felt stacked (multiple loops / no restore). Current build: restore stock first, then apply one mult; single LoopAsync; debounced keys. Gear scaling + props are the main path.
 
 ---
 

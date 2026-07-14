@@ -51,7 +51,7 @@ DirtCapacityConfig = {
             -- weight_scale auto = 0.5
         },
         huge = {
-            dirt_capacity = 4.0,
+            dirt_capacity = 32.0,
             -- terrain_manipulation auto = 4.0
             -- weight_scale auto = 0.25
         },
