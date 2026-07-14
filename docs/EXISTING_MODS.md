@@ -24,11 +24,16 @@ Always re-read live `mods.txt` — user may change it.
 
 ## Custom mods
 
+**Source of truth (private GitHub):** https://github.com/tonyoo/out-of-ore-gameplay-mods  
+**Local private clone:** `D:\OpenCode\out-of-ore-gameplay-mods`  
+**Live test install:** still under game `UE4SS\Mods\`  
+**Public loader repo does not contain these mods.**
+
 ### DirtCapacityMod ✅
 
 | | |
 |--|--|
-| Path | `Mods\DirtCapacityMod\Scripts\` |
+| Path | `Mods\DirtCapacityMod\Scripts\` (game) / private repo |
 | Config | `config.lua` → `DirtCapacityConfig` |
 | Target | `TerraformComponent` (+ optional vehicle `TransDirtAccSize`) |
 | Goal | Bigger dirt hold; terrain dig/dump matches; full bucket still liftable |

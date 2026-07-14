@@ -139,7 +139,7 @@ class InstallerApp(tk.Tk):
         )
         self.opt_ue4ss = tk.BooleanVar(value=True)
         self.opt_manager = tk.BooleanVar(value=True)
-        self.opt_starter = tk.BooleanVar(value=True)
+        self.opt_starter = tk.BooleanVar(value=False)  # loader kit has no gameplay packs
         self.opt_shortcut = tk.BooleanVar(value=True)
 
         self._build_ui()
@@ -186,8 +186,13 @@ class InstallerApp(tk.Tk):
         ).pack(anchor=tk.W)
         ttk.Checkbutton(
             opts,
-            text="Install starter custom mods pack (if included)",
+            text="Install optional pack from payload/Optional (if present)",
             variable=self.opt_starter,
+        ).pack(anchor=tk.W)
+        ttk.Label(
+            opts,
+            text="Default kit is loader-only (no dirt/speed gameplay mods).",
+            foreground="#555",
         ).pack(anchor=tk.W)
         ttk.Checkbutton(
             opts, text="Create desktop shortcut to Mod Manager", variable=self.opt_shortcut

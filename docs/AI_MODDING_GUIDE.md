@@ -25,42 +25,50 @@ Mod **Out of Ore** (Steam) using **UE4SS Lua**. Prior work includes:
 
 | Item | Value |
 |------|--------|
-| Local monorepo | `D:\OpenCode\out-of-ore-modding` |
-| Remote | https://github.com/tonyoo/out-of-ore-modding |
-| Branch | `main` |
+| Public monorepo (loader only) | `D:\OpenCode\out-of-ore-modding` → https://github.com/tonyoo/out-of-ore-modding |
+| Private monorepo (gameplay mods) | `D:\OpenCode\out-of-ore-gameplay-mods` → https://github.com/tonyoo/out-of-ore-gameplay-mods |
+| Branch | `main` (both) |
+
+**Public kit never packages DirtCapacity / VehicleSpeed / BlueprintDump.**  
+Gameplay mod sources live only in the **private** repo (+ live game `UE4SS\Mods` for testing).
 
 ### After each change (required)
 
+**Gameplay mods** (Dirt / Speed / Dump):
+
 ```powershell
-# 1) If you edited live game mods, sync into repo:
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
-$repo = "D:\OpenCode\out-of-ore-modding"
+$priv = "D:\OpenCode\out-of-ore-gameplay-mods"
 foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod")) {
-  # add other mod folder names as they are created
   if (Test-Path "$gameMods\$m") {
-    Remove-Item "$repo\mods\$m" -Recurse -Force -ErrorAction SilentlyContinue
-    Copy-Item "$gameMods\$m" "$repo\mods\$m" -Recurse -Force
+    Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
+    Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
   }
 }
-
-# 2) If you edited AI handoff docs:
-Copy-Item "D:\OpenCode\Grok Out Of ore\*" "$repo\docs\" -Force -Recurse
-
-# 3) Commit + push
-cd D:\OpenCode\out-of-ore-modding
+cd $priv
 git add -A
-git status
-git commit -m "Describe the change clearly"
+git commit -m "Describe gameplay mod change"
 git push origin main
 ```
 
-### When to also make a GitHub Release
-
-- **Every small fix/config tweak:** push `main` only (required).  
-- **New shareable kit for friends** (rebuilt EXE/installer/zip): tag a release, e.g. `v1.0.1`, and attach `OutOfOre-Modding-Kit-*.zip`.
+**Loader / manager / installer / public docs:**
 
 ```powershell
-gh release create v1.0.1 "path\to\OutOfOre-Modding-Kit.zip" --title "v1.0.1" --notes "..."
+# Sync tools from live OutOfOreModManager if edited there
+# Sync docs from D:\OpenCode\Grok Out Of ore into public repo docs\
+cd D:\OpenCode\out-of-ore-modding
+git add -A
+git commit -m "Describe loader/docs change"
+git push origin main
+```
+
+### When to also make a GitHub Release (public loader only)
+
+- Rebuild with: `OutOfOreModManager\Rebuild All.bat`  
+- Publish **loader-only** kit (no gameplay mods):
+
+```powershell
+gh release create v1.1.0 "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.1.0.zip" --repo tonyoo/out-of-ore-modding --title "v1.1.0" --notes "Loader only"
 ```
 
 ### Do not

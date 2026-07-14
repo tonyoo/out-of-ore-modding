@@ -7,7 +7,7 @@ $GameRoot = Split-Path -Parent $Root
 $Win64 = Join-Path $GameRoot "OutOfOre\Binaries\Win64"
 $UE4SS = Join-Path $Win64 "UE4SS"
 $Dist = Join-Path $Root "dist"
-$KitName = "OutOfOre-Modding-Kit-v1.0"
+$KitName = "OutOfOre-Modding-Kit-v1.1.0"
 $KitDir = Join-Path $Dist $KitName
 $Payload = Join-Path $KitDir "payload"
 
@@ -118,54 +118,24 @@ if (Test-Path (Join-Path $Root "README.md")) {
     Copy-Item (Join-Path $Root "README.md") (Join-Path $Payload "ModManager\README.md") -Force
 }
 
-# Starter custom pack
-$customMods = @("DirtCapacityMod", "VehicleSpeedMod", "BlueprintDumpMod")
-$packStaging = Join-Path $Dist "_pack_staging"
-if (Test-Path $packStaging) { Remove-Item -Recurse -Force $packStaging }
-New-Item -ItemType Directory -Force -Path (Join-Path $packStaging "mods") | Out-Null
-$packMods = @()
-foreach ($name in $customMods) {
-    $s = Join-Path $modsSrc $name
-    if (Test-Path $s) {
-        Copy-Item $s (Join-Path $packStaging "mods\$name") -Recurse -Force
-        $packMods += @{ name = $name; enabled = $true; stock = $false }
-    }
-}
-if ($packMods.Count -gt 0) {
-    $manifest = @{
-        format = "outofore-modpack"
-        format_version = 1
-        name = "Out of Ore Starter Custom Mods"
-        author = "local"
-        description = "Dirt capacity + vehicle speed (+ dump tools if present)"
-        created_utc = (Get-Date).ToUniversalTime().ToString("o")
-        game = "Out of Ore"
-        target = "UE4SS"
-        mods = $packMods
-    } | ConvertTo-Json -Depth 5
-    Set-Content (Join-Path $packStaging "manifest.json") $manifest -Encoding UTF8
-    $ooomod = Join-Path $Payload "Optional\StarterCustomMods.ooomod"
-    if (Test-Path $ooomod) { Remove-Item $ooomod -Force }
-    Compress-Archive -Path (Join-Path $packStaging "*") -DestinationPath ($ooomod -replace "\.ooomod$", ".zip") -Force
-    # rename zip to ooomod
-    $zipTmp = $ooomod -replace "\.ooomod$", ".zip"
-    Move-Item $zipTmp $ooomod -Force
-    Copy-Item $ooomod (Join-Path $Payload "ModManager\packs\StarterCustomMods.ooomod") -Force
-    Write-Host "Starter pack: $ooomod"
-}
+# LOADER KIT ONLY — do NOT package gameplay mods (DirtCapacity, VehicleSpeed, etc.)
+# Those live in the private repo: tonyoo/out-of-ore-gameplay-mods
+Write-Host "Skipping custom gameplay packs (loader-only kit)."
 
 # Installer EXE at kit root
 Copy-Item $InstExe (Join-Path $KitDir "Install Out of Ore Mods.exe") -Force
 
 # README for end users
 @"
-Out of Ore Modding Kit v1.0
-===========================
+Out of Ore Modding Kit v1.1.0 (LOADER ONLY)
+==========================================
 
 WHAT THIS INSTALLS
 - UE4SS (mod loader runtime for Unreal games)
 - Out of Ore Mod Manager (GUI .exe, no Python needed)
-- Optional starter custom mods pack
+
+This kit does NOT include gameplay mods (dirt capacity, vehicle speed, etc.).
+Those are distributed separately (private).
 
 REQUIREMENTS
 - Out of Ore installed via Steam
@@ -177,15 +147,15 @@ INSTALL
 3. Confirm/browse to your game folder:
      ...\steamapps\common\OutofOre
    (the folder that CONTAINS the OutOfOre\ subfolder)
-4. Leave all boxes checked and click Install.
+4. Install UE4SS + Mod Manager, then click Install.
 5. Use the desktop shortcut "Out of Ore Mod Manager" (or open
      OutofOre\OutOfOreModManager\OutOfOreModManager.exe)
-6. Launch Out of Ore. Mods load automatically via UE4SS.
+6. Launch Out of Ore. UE4SS loads automatically.
 
 VERIFY
 - After launching the game, check:
     OutOfOre\Binaries\Win64\UE4SS\UE4SS.log
-  You should see "PS scan successful" and "Starting Lua mod ..."
+  You should see "PS scan successful" and stock Lua mods starting.
 
 PACK / SHARE YOUR OWN MODS
 - Open Mod Manager -> select mods -> Pack Selected
@@ -200,6 +170,7 @@ TROUBLESHOOTING
 CREDITS
 - UE4SS: https://github.com/UE4SS-RE/RE-UE4SS (MIT License)
 - See payload\UE4SS\LICENSE
+- Loader tools: https://github.com/tonyoo/out-of-ore-modding
 "@ | Set-Content (Join-Path $KitDir "README.txt") -Encoding UTF8
 
 # Zip the kit

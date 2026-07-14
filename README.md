@@ -1,84 +1,72 @@
-# Out of Ore Modding
+# Out of Ore Modding (public — loader only)
 
-UE4SS Lua mods, desktop **Mod Manager**, and a one-click **installer kit** for [Out of Ore](https://store.steampowered.com/app/1304930/Out_of_Ore/).
+UE4SS install helpers and a desktop **Mod Manager** for [Out of Ore](https://store.steampowered.com/app/1304930/Out_of_Ore/).
 
-## For players (friends)
+**This repository does not ship gameplay mods** (dirt capacity, vehicle speed, etc.).  
+Those are in a **private** repo: [`out-of-ore-gameplay-mods`](https://github.com/tonyoo/out-of-ore-gameplay-mods).
+
+## For players
 
 1. Install **Out of Ore** from Steam (launch once).  
-2. Download the latest **Release** zip:  
+2. Download the latest **Release**:  
    **https://github.com/tonyoo/out-of-ore-modding/releases/latest**  
-   (asset: `OutOfOre-Modding-Kit-v1.0.zip`)
+   (asset: `OutOfOre-Modding-Kit-v1.1.0.zip`)  
 3. Run **`Install Out of Ore Mods.exe`**  
-4. Point it at `...\steamapps\common\OutofOre`  
-5. Open **Out of Ore Mod Manager** → manage/pack/unpack mods  
-6. Launch the game  
+4. Select `...\steamapps\common\OutofOre`  
+5. Install → open **Out of Ore Mod Manager** → launch game  
 
 No Python required for end users.
 
-## For developers / AI
+### What the kit installs
+
+| Component | Purpose |
+|-----------|---------|
+| UE4SS | Runtime that loads Lua mods |
+| OutOfOreModManager.exe | Enable/disable mods, pack/unpack `.ooomod` |
+| Stock UE4SS tools | Console enabler, keybinds, BPModLoader, etc. |
+
+**Not included:** DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod.
+
+## For developers
 
 | Path | Contents |
 |------|----------|
-| `mods/` | Custom Lua mods (source of truth) |
-| `tools/mod-manager/` | Mod Manager Python app + EXE build |
-| `tools/installer/` | Installer + kit assembly scripts |
-| `docs/` | Full AI/human handoff guide |
-| `scripts/deploy_to_game.ps1` | Copy `mods/` → live game `UE4SS\Mods` |
+| `tools/mod-manager/` | Manager source + `build_exe.bat` + **`Rebuild All.bat`** |
+| `tools/installer/` | Installer source + `assemble_kit.ps1` |
+| `docs/` | AI/human handoff guides |
+| `mods/` | Empty on purpose (loader-only) |
 
-**AI session start:** read `docs/AI_MODDING_GUIDE.md` and `docs/PATHS.md`.
+### Rebuild manager + installer + kit
 
-### Standing rule: push every change
-
-After any mod/tool/docs edit:
-
-1. Sync live game mods into `mods/` if the game copy was edited  
-2. Sync handoff docs into `docs/` if `D:\OpenCode\Grok Out Of ore` was edited  
-3. `git add -A && git commit -m "..." && git push origin main`  
-
-Release zips only when shipping a new kit to players—not required for every tweak.
-
-```powershell
-# Deploy mods from this repo into your game install
-.\scripts\deploy_to_game.ps1
-```
-
-## Repo layout
+From the live tools folder (game drive):
 
 ```text
-out-of-ore-modding/
-  mods/                 DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod
-  tools/mod-manager/    ooo_mod_manager.py, build_exe.bat
-  tools/installer/      ooo_mod_installer.py, assemble_kit.ps1
-  docs/                 AI handoff documentation
-  scripts/              deploy helpers
-  vendor/               notes on UE4SS payload (binaries via Releases only)
+E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\Rebuild All.bat
 ```
 
-## Build release kit (maintainer)
+Or copy that bat into this repo’s `tools/` and run after adjusting paths.
 
-Requires Python 3 + PyInstaller on Windows.
+Steps inside the bat:
 
-```powershell
-cd tools\mod-manager
-.\build_exe.bat
-cd ..\installer
-.\build_installer_exe.bat
-# Adapt assemble_kit.ps1 paths or run from original OutOfOreModManager until ported
-```
+1. PyInstaller → `OutOfOreModManager.exe`  
+2. PyInstaller → `Install Out of Ore Mods.exe`  
+3. `assemble_kit.ps1` → loader-only zip (no gameplay packs)  
 
-Publish:
+### Standing rule
 
-```powershell
-gh release create v1.0.0 releases/OutOfOre-Modding-Kit-v1.0.zip --title "v1.0.0" --notes "UE4SS + Mod Manager + starter mods"
-```
+After changes: commit + `git push origin main`.  
+New player-facing kit: also publish a GitHub Release with the zip.
+
+## Related
+
+| Repo | Visibility | Contents |
+|------|------------|----------|
+| [tonyoo/out-of-ore-modding](https://github.com/tonyoo/out-of-ore-modding) | **Public** | Loader, manager, installer |
+| [tonyoo/out-of-ore-gameplay-mods](https://github.com/tonyoo/out-of-ore-gameplay-mods) | **Private** | Dirt / speed / dump mods |
 
 ## License
 
-- **This repository** (mods + tools): MIT — see `LICENSE`  
-- **UE4SS** (bundled in release kits): MIT — [UE4SS-RE/RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS)  
+- Tools in this repo: MIT — see `LICENSE`  
+- UE4SS in release kits: MIT — [UE4SS-RE/RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS)  
 
-Out of Ore game files are **not** included and must not be redistributed.
-
-## Disclaimer
-
-Unofficial fan tools. Not affiliated with the game developers. Use at your own risk; keep Steam backups. Antivirus may flag injection proxy / PyInstaller EXEs.
+Game files are not included.
