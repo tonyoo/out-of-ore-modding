@@ -93,7 +93,7 @@ Enable when researching new systems.
 
 - Was role-based store purchase filter on `PC_Standard_C:PurchaseItem`  
 - **Folder deleted**; removed from mods.txt/json  
-- Unlock-all store behavior lives in private repo as **StoreUnlockAll** (not in public kit)  
+- StoreUnlockAll (unlock-all attempt) was also abandoned and removed  
 
 ---
 

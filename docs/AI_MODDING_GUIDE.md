@@ -214,8 +214,8 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 |-----|--------|-------------------|
 | **DirtCapacityMod** | Private gameplay | `dirtcap_*` — capacity + terrain + weight |
 | **VehicleSpeedMod** | Private gameplay | `vehiclespeed_*` — props + gear scale |
-| **StoreUnlockAll** | Private gameplay | `storeunlock_*` — unlock all store items |
 | **BlueprintDumpMod** | Private research | `bpdump_*` |
+| **StoreUnlockAll** | **Deleted** | Abandoned; do not restore |
 | **RoleStoreMod** | **Deleted** | Do not restore |
 
 Stock console enabler is on → in-game console works.
