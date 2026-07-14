@@ -15,10 +15,23 @@
 Read D:\OpenCode\Grok Out Of ore\AI_MODDING_GUIDE.md and PATHS.md first.
 You are helping mod Out of Ore with UE4SS Lua.
 Game root: E:\SteamLibrary\steamapps\common\OutofOre
+Git monorepo: D:\OpenCode\out-of-ore-modding (GitHub: tonyoo/out-of-ore-modding)
 Follow PATHS, EXISTING_MODS, and PITFALLS before changing anything.
 Do not re-multiply live property values every tick (stacking). Prefer original×multiplier caches.
 Machines are mostly AVS_SuperVehicleBase, not BP_VehicleBase.
+AFTER EVERY CHANGE: sync files into the monorepo, commit, and git push origin main.
 ```
+
+## Standing rule: always update GitHub
+
+**After every mod, tool, or docs change**, the AI (or human) must:
+
+1. Sync live game mods → `D:\OpenCode\out-of-ore-modding\mods\` (if game copies were edited)
+2. Sync docs → `D:\OpenCode\out-of-ore-modding\docs\` if handoff docs changed
+3. `cd D:\OpenCode\out-of-ore-modding`
+4. `git add -A` → `git commit -m "..."` → `git push origin main`
+
+Optional: new **Release** only when shipping a rebuilt kit zip for friends (not every small tweak).
 
 ## Quick facts
 

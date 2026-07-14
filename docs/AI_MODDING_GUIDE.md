@@ -15,6 +15,58 @@ Mod **Out of Ore** (Steam) using **UE4SS Lua**. Prior work includes:
 - Dirt capacity + terrain + weight compensation  
 - Desktop Mod Manager + one-click installer kit for sharing  
 - Removing RoleStoreMod  
+- GitHub monorepo + releases  
+
+---
+
+## 1b. ALWAYS push changes to GitHub (standing order)
+
+**User requirement:** every time you make a change, update GitHub. Do not leave edits only on disk.
+
+| Item | Value |
+|------|--------|
+| Local monorepo | `D:\OpenCode\out-of-ore-modding` |
+| Remote | https://github.com/tonyoo/out-of-ore-modding |
+| Branch | `main` |
+
+### After each change (required)
+
+```powershell
+# 1) If you edited live game mods, sync into repo:
+$gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
+$repo = "D:\OpenCode\out-of-ore-modding"
+foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod")) {
+  # add other mod folder names as they are created
+  if (Test-Path "$gameMods\$m") {
+    Remove-Item "$repo\mods\$m" -Recurse -Force -ErrorAction SilentlyContinue
+    Copy-Item "$gameMods\$m" "$repo\mods\$m" -Recurse -Force
+  }
+}
+
+# 2) If you edited AI handoff docs:
+Copy-Item "D:\OpenCode\Grok Out Of ore\*" "$repo\docs\" -Force -Recurse
+
+# 3) Commit + push
+cd D:\OpenCode\out-of-ore-modding
+git add -A
+git status
+git commit -m "Describe the change clearly"
+git push origin main
+```
+
+### When to also make a GitHub Release
+
+- **Every small fix/config tweak:** push `main` only (required).  
+- **New shareable kit for friends** (rebuilt EXE/installer/zip): tag a release, e.g. `v1.0.1`, and attach `OutOfOre-Modding-Kit-*.zip`.
+
+```powershell
+gh release create v1.0.1 "path\to\OutOfOre-Modding-Kit.zip" --title "v1.0.1" --notes "..."
+```
+
+### Do not
+
+- Commit game `.pak`, dumps, crash logs, or `UE4SS.log` (see `.gitignore`)  
+- Finish a task with only game-folder edits and no push  
 
 ---
 

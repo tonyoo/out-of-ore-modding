@@ -135,3 +135,6 @@ Console (ConsoleEnablerMod): `dump_object <path>`
 - After Manager enable/disable: tell user to **restart the game**  
 - When packaging for others: run assemble kit so dumps/logs are not shipped  
 - Manager `app_dir()` uses `sys.executable` parent when frozen as EXE  
+- **After every change:** sync monorepo + `git push origin main` (see `AI_MODDING_GUIDE.md` §1b)  
+- GitHub: https://github.com/tonyoo/out-of-ore-modding  
+

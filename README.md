@@ -27,6 +27,16 @@ No Python required for end users.
 
 **AI session start:** read `docs/AI_MODDING_GUIDE.md` and `docs/PATHS.md`.
 
+### Standing rule: push every change
+
+After any mod/tool/docs edit:
+
+1. Sync live game mods into `mods/` if the game copy was edited  
+2. Sync handoff docs into `docs/` if `D:\OpenCode\Grok Out Of ore` was edited  
+3. `git add -A && git commit -m "..." && git push origin main`  
+
+Release zips only when shipping a new kit to players—not required for every tweak.
+
 ```powershell
 # Deploy mods from this repo into your game install
 .\scripts\deploy_to_game.ps1
