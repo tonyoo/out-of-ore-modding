@@ -39,7 +39,7 @@ Gameplay mod sources live only in the **private** repo (+ live game `UE4SS\Mods`
 ```powershell
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
 $priv = "D:\OpenCode\out-of-ore-gameplay-mods"
-foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod")) {
+foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod")) {
   if (Test-Path "$gameMods\$m") {
     Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
@@ -214,7 +214,8 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 |-----|--------|-------------------|
 | **DirtCapacityMod** | Private gameplay | `dirtcap_*` — capacity + terrain + weight |
 | **VehicleSpeedMod** | Private gameplay | `vehiclespeed_*` — props + gear scale |
-| **BlueprintDumpMod** | Private research | `bpdump_*` |
+| **BlueprintDumpMod** | Research | `bpdump_*` |
+| **GpsAssistMod** | Private gameplay | `gpsassist_*` — GPS height/angle → blade keys |
 | **StoreUnlockAll** | **Deleted** | Abandoned; do not restore |
 | **RoleStoreMod** | **Deleted** | Do not restore |
 
@@ -299,6 +300,12 @@ See `TOOLS.md`.
 ### BlueprintDumpMod (if enabled)
 
 - `bpdump_game` / `bpdump_detail ClassName` / `bpdump_actors` / `bpdump_help`  
+
+### GpsAssistMod
+
+- `gpsassist_status` / `gpsassist_probe` / `gpsassist_enable 0|1`  
+- `gpsassist_axes height|angle|both` / `gpsassist_logonly 0|1`  
+- `gpsassist_deadzone_height` / `gpsassist_deadzone_angle` / `gpsassist_reload`  
 
 ### Stock
 

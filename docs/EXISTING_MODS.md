@@ -13,9 +13,11 @@ LineTraceMod : 0
 BPML_GenericFunctions : 1
 BPModLoaderMod : 1
 Keybinds : 1
-BlueprintDumpMod : 0
+BlueprintDumpMod : 1
 VehicleSpeedMod : 1
-DirtCapacityMod : 1
+DirtCapacityMod : 0
+VehicleScaleMod : 1
+GpsAssistMod : 1
 ```
 
 Always re-read live `mods.txt` — user may change it.
@@ -76,6 +78,31 @@ Always re-read live `mods.txt` — user may change it.
 
 ---
 
+### GpsAssistMod ✅
+
+| | |
+|--|--|
+| Path | `Mods\GpsAssistMod\Scripts\` (game) / private repo |
+| Config | `config.lua` → `GpsAssistConfig` |
+| Target | `W_GPSExcavatingSystem` Target/Actual + Diff* text; optional `TerraformComponent` |
+| Goal | In-game GPS blade assist (no screen pixels) — height/angle error → blade keys |
+
+**Config keys:**
+
+- `enabled`, `axes` (`height` / `angle` / `both`)
+- `log_only` — sense + log only (default **true** until HUD match verified)
+- `deadzone_height`, `deadzone_angle`, hysteresis, invert flags
+- `keys` — Unreal FKey names (`Equals`, `Hyphen`, `LeftBracket`, `RightBracket`)
+- `write_state_file` → `gpsassist_state.json` in UE4SS cwd
+
+**Commands:** `gpsassist_status`, `gpsassist_enable`, `gpsassist_axes`, `gpsassist_deadzone_height`, `gpsassist_deadzone_angle`, `gpsassist_logonly`, `gpsassist_probe`, `gpsassist_reload`, `gpsassist_help`
+
+**Safety:** Does not multiply vehicle physics props. Default is log-only; enable keys with `gpsassist_logonly 0` after probe matches HUD.
+
+**Related:** Desktop pixel tool `D:\OpenCode\work\out_of_ore_gps_tool.py` remains a no-UE4SS fallback only.
+
+---
+
 ### BlueprintDumpMod (optional)
 
 | | |
@@ -89,11 +116,19 @@ Enable when researching new systems.
 
 ---
 
+### StoreUnlockAll ❌ removed
+
+- Attempted store unlock / old-vehicle restore; abandoned (shop crash + purchase no-ops).  
+- **Folder deleted** from game and private repo; removed from mods.txt/json.  
+- Do **not** recreate unless explicitly requested.  
+
+---
+
 ### RoleStoreMod ❌ removed
 
 - Was role-based store purchase filter on `PC_Standard_C:PurchaseItem`  
 - **Folder deleted**; removed from mods.txt/json  
-- StoreUnlockAll (unlock-all attempt) was also abandoned and removed  
+- Do **not** recreate  
 
 ---
 
