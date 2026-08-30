@@ -2,8 +2,7 @@
 
 UE4SS install helpers and a desktop **Mod Manager** for [Out of Ore](https://store.steampowered.com/app/1304930/Out_of_Ore/).
 
-**This repository does not ship gameplay mods** (dirt capacity, vehicle speed, etc.).  
-Those are in a **private** repo: [`out-of-ore-gameplay-mods`](https://github.com/tonyoo/out-of-ore-gameplay-mods).
+**This repository does not ship gameplay mods**.  
 
 ## For players
 
