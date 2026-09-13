@@ -79,9 +79,12 @@ Base: `...\UE4SS\Mods\`
 
 | Mod folder | Typical role |
 |------------|----------------|
-| `VehicleSpeedMod` | Speed / gears |
-| `DirtCapacityMod` | Bucket capacity + terrain + weight |
-| `BlueprintDumpMod` | Runtime BP dumps |
+| `VehicleSpeedMod` | Speed / gears (private) |
+| `DirtCapacityMod` | Bucket capacity + terrain + weight (private) |
+| `BlueprintDumpMod` | Runtime BP dumps (private) |
+| `MiniMapMod` | HUD mini-map (**public** optional kit payload) |
+| `DevMenuMod` | Unhide Dev / Building XML / Terraform tab (private) |
+| `VehicleTuneMod` | Per-type speed / hyd / size / capacity (private) |
 | `RoleStoreMod` | **Removed** (do not recreate unless asked) |
 
 Stock UE4SS (keep):  
@@ -95,8 +98,8 @@ Stock UE4SS (keep):
 | Manager EXE | `...\OutOfOreModManager\OutOfOreModManager.exe` |
 | Manager source | `...\OutOfOreModManager\ooo_mod_manager.py` |
 | Installer source | `...\OutOfOreModManager\ooo_mod_installer.py` |
-| Share kit zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.0.zip` |
-| Kit folder | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.0\` |
+| Share kit zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip` |
+| Kit folder | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0\` |
 | Rebuild kit | `...\OutOfOreModManager\Rebuild Kit.bat` |
 | Assemble script | `...\OutOfOreModManager\assemble_kit.ps1` |
 

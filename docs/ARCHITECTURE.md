@@ -97,6 +97,22 @@ TerraformComponent_C  (on machines)
 Raising capacity without lowering weight density → **cannot lift full bucket**.  
 Raising capacity without terrain scale → **dig/dump feels stock**.
 
+## In-game map (mini-map)
+
+Tablet **I** → Map uses:
+
+| Piece | Role |
+|-------|------|
+| `W_Menu_Map` | Tablet map page |
+| `W_Element_MapImage` | Image + pins (`Image_Map`, `PlayerIconCanvas`, `Canvas_MapMarkers`) |
+| `Map_Component_C` | On `PC_Standard`: zoom, pan, `CenterOnControlledPawn`, `RuntimeMapRenderTarget` |
+| `BP_MapCaptureActor_C` | Overhead capture (`CaptureNow`, `ApplyView`, `SetMapCaptureHiddenActors`) |
+| `W_HUD` / `ConstantHud` | Persistent HUD canvas — parent a HUD overlay here |
+
+MiniMapMod `CreateWidget`s a **second** `W_Element_MapImage`, parents it to `ConstantHud` (192px slot), hides slider chrome, keeps `Image_Map` + markers. Palworld LogicMods will not work (UE5 vs 4.27).
+
+Dev tablet (`W_Menu_Dev`) is collapsed in shipping. `W_Element_Button_Terraform` is a **vehicle XML DigComp tab**, not world terraform.
+
 ## Inventory / containers
 
 - `SchaktInventoryComponent`: `MaxSize`, fuel max, production sizes  

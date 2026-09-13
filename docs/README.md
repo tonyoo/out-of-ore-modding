@@ -6,7 +6,7 @@
 
 1. **`AI_MODDING_GUIDE.md`** ← read this first (master handoff)  
 2. **`PATHS.md`** ← absolute paths inventory  
-3. **`PITFALLS.md`** ← before changing vehicle/dirt/hooks  
+3. **`PITFALLS.md`** ← before changing vehicle/dirt/hooks **or HUD overlays**  
 4. **`EXISTING_MODS.md`**, **`MOD_RECIPES.md`**, **`ARCHITECTURE.md`**, **`TOOLS.md`** as needed  
 
 ## Session start prompt (paste into a new chat)
@@ -26,7 +26,7 @@ AFTER EVERY CHANGE: sync files into the monorepo, commit, and git push origin ma
 
 **After every mod, tool, or docs change**, the AI (or human) must:
 
-1. Sync live game mods → `D:\OpenCode\out-of-ore-modding\mods\` (if game copies were edited)
+1. Sync MiniMapMod → `D:\OpenCode\out-of-ore-modding\mods\` if that public mod changed; other gameplay mods stay private
 2. Sync docs → `D:\OpenCode\out-of-ore-modding\docs\` if handoff docs changed
 3. `cd D:\OpenCode\out-of-ore-modding`
 4. `git add -A` → `git commit -m "..."` → `git push origin main`

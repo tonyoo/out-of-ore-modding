@@ -30,7 +30,8 @@ Mod **Out of Ore** (Steam) using **UE4SS Lua**. Prior work includes:
 | Branch | `main` (both) |
 
 **Public kit never packages DirtCapacity / VehicleSpeed / BlueprintDump.**  
-Gameplay mod sources live only in the **private** repo (+ live game `UE4SS\Mods` for testing).
+**MiniMapMod is the exception:** source in `mods/MiniMapMod`, optional kit payload (`v1.2.0`).  
+Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` for testing).
 
 ### After each change (required)
 
@@ -39,7 +40,7 @@ Gameplay mod sources live only in the **private** repo (+ live game `UE4SS\Mods`
 ```powershell
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
 $priv = "D:\OpenCode\out-of-ore-gameplay-mods"
-foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod")) {
+foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod","VehicleTuneMod","DevMenuMod","MiniMapMod")) {
   if (Test-Path "$gameMods\$m") {
     Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
@@ -68,7 +69,7 @@ git push origin main
 - Publish **loader-only** kit (no gameplay mods):
 
 ```powershell
-gh release create v1.1.0 "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.1.0.zip" --repo tonyoo/out-of-ore-modding --title "v1.1.0" --notes "Loader only"
+gh release create v1.2.0 "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip" --repo tonyoo/out-of-ore-modding --title "v1.2.0" --notes "Loader + optional MiniMapMod"
 ```
 
 ### Do not
@@ -157,6 +158,9 @@ E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\
 | Vehicle plugin | `/VehicleSystemPlugin/AVS_Vehicle.AVS_Vehicle_C` | MaxSpeedLimit, gears, torque, throttle |
 | Older vehicle BP | `/Game/Blueprints/BP_VehicleBase.BP_VehicleBase_C` | TopSpeedF etc. — **not always** the driven class |
 | Dirt / bucket | `/Game/VehicleComponents/TerraformComponent.TerraformComponent_C` | Fill volume, cut/dump, weight |
+| Map HUD | `W_Element_MapImage_C`, `Map_Component_C`, `BP_MapCaptureActor_C` | Tablet map / MiniMapMod overlay |
+| HUD canvas | `W_HUD_C` / `ConstantHud` | Parent HUD widgets (`AddChild` slot) |
+| Dev tablet | `W_Menu_Dev`, `W_VehicleXMLConfig`, `W_BuildingXmlConfig` | Hidden in shipping; DevMenuMod unhides |
 | Store UI | `W_Menu_Store_C` | UI filters (heavier than PC hooks) |
 
 Native packages of interest: `/Script/OutOfOre.*` (e.g. `SchaktPlayerController`, `SchaktInventoryComponent`).
@@ -188,9 +192,9 @@ Also add to `mods.json` for consistency.
 1. **Property patching** with **original × multiplier** (cache originals by object address — **never stack**)  
 2. **RegisterHook** on Blueprint/native UFunctions  
 3. **RegisterConsoleCommandHandler** for reload/status  
-4. **RegisterKeyBind**  
+4. **RegisterKeyBind(Key, { ModifierKey... }, fn)** — always **3 args** (2-arg Fatals)  
 5. **NotifyOnNewObject** + delayed apply on spawn  
-6. **LoopAsync** re-apply (only from originals)  
+6. **LoopAsync** + **one stable** `ExecuteInGameThread(GameTick)` (not a new closure every pulse; not UObject work on the async thread)  
 
 Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 
@@ -198,8 +202,9 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 
 - Folder: `Content\Paks\LogicMods\`  
 - Loaded by `BPModLoaderMod`  
-- Needs cooked `.pak` + usually UE 4.27 editor workflow  
-- Prefer Lua for value tweaks and hooks  
+- Needs cooked `.pak` + usually UE **4.27** editor workflow  
+- **Palworld / UE5 paks will not load** (e.g. DekBasicMinimap)  
+- Prefer Lua for value tweaks, hooks, and HUD overlays  
 
 ### Offline research
 
@@ -216,6 +221,9 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 | **VehicleSpeedMod** | Private gameplay | `vehiclespeed_*` — props + gear scale |
 | **BlueprintDumpMod** | Research | `bpdump_*` |
 | **GpsAssistMod** | Private gameplay | `gpsassist_*` — GPS height/angle → blade keys |
+| **VehicleTuneMod** | Private gameplay | `vehicletune_*` — per-type speed / hyd / size / capacity |
+| **DevMenuMod** | Private gameplay | `devmenu_*` — unhide Dev / Building XML / Terraform tab |
+| **MiniMapMod** | **Public optional** | `minimap_*` — HUD overlay of stock map capture |
 | **StoreUnlockAll** | **Deleted** | Abandoned; do not restore |
 | **RoleStoreMod** | **Deleted** | Do not restore |
 

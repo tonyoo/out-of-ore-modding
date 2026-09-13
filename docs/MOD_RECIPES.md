@@ -169,6 +169,13 @@ end)
 | Multiply weight with dirt capacity | Scale weight **down** when capacity up |
 | Enable LoadAllAssets dumps by default | One-shot only; risk OOM/crash |
 | Edit the main `.pak` for small tweaks | Lua or LogicMods |
+| Drop Palworld `.pak` into LogicMods | Lua overlay of stock widgets (4.27) |
+| `RegisterKeyBind(Key.ADD, fn)` | `RegisterKeyBind(Key.UP_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, fn)` |
+| `actorFn({ pawn })` as TArray | Don’t; crash. Use BP functions that take scalars/objects |
+| `LoopAsync` + `CaptureNow` | `ExecuteInGameThread` + **one** stable `GameTick` |
+| `CreateWidget` extra `W_Element_Button` | Fatal; reuse existing widgets / keys |
+| Collapse `Border`/`SizeBox` blindly | Dump parents first (`minimap_dump`); hide siblings of `Image_Map` only |
+| `AddToViewport` for HUD | `W_HUD.ConstantHud:AddChild` + returned canvas slot |
 
 ---
 
@@ -191,3 +198,16 @@ package.loaded["config"] = nil
 require("config")
 Config = MyCoolConfig or {}
 ```
+
+---
+
+## HUD overlay (MiniMapMod pattern)
+
+1. Wait until **in-world**: live `PC_Standard_C` + `W_HUD_C` (not main menu).  
+2. `WidgetBlueprintLibrary:Create(pc, W_Element_MapImage_C, pc)` on the **game thread**.  
+3. Parent with `ConstantHud:AddChild(widget)` and layout the **returned slot** (`SetAnchors` / `SetSize` / `SetPosition`).  
+4. Bind `Map_Component.RuntimeMapRenderTarget` onto `Image_Map` (`SetBrushFromTextureDynamic`).  
+5. Hide slider chrome (`MapZoomSlider`, `Image_256`); keep `Image_Map` + marker canvases.  
+6. Tick: visibility + bind only; let `HandleMapOpened` own capture. Do **not** pass Lua tables as actor arrays.  
+
+Console: `minimap_dump` prints each named widget’s visibility and parent.

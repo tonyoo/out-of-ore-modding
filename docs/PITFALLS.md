@@ -1,6 +1,6 @@
 # Pitfalls and incident history
 
-Read this before implementing vehicle, dirt, or aggressive hooks.
+Read this before implementing vehicle, dirt, HUD overlays, or aggressive hooks.
 
 ---
 
@@ -130,9 +130,123 @@ AVS_SuperVehicleBase_C
 
 ---
 
+## 13. Palworld LogicMods on Out of Ore (CRITICAL)
+
+**Symptom:** Pak does not load, or Fatal on start.
+
+**Cause:** Packs like `DekBasicMinimap_P.pak` are **Palworld / UE5**. Out of Ore is **UE 4.27**.
+
+**Fix:** Never copy foreign-game LogicMods into `Content\Paks\LogicMods`. For a mini-map, Lua + stock `W_Element_MapImage` / `Map_Component`.
+
+---
+
+## 14. Lua `obj:Method` without `()` (mod never loads)
+
+**Symptom:** Console `command not recognized`; `UE4SS.log`: `function arguments expected near 'if'`.
+
+**Cause:** `pc:GetComponentByClass` is a **call**. Without `()` Lua treats the next `if` as an argument.
+
+**Fix:** Do not store methods with `:`. Use `obj.Method` or `obj:Method(args)`. A syntax error in `main.lua` aborts **before** `RegisterConsoleCommandHandler`.
+
+---
+
+## 15. `RegisterKeyBind` 2-arg form Fatals (CRITICAL)
+
+**Symptom:** Overlay works; pressing Numpad+/− or PageUp → **Fatal error**.
+
+**Cause:** `RegisterKeyBind(Key.ADD, function)` (two arguments). Working mods use **three**:
+
+```lua
+RegisterKeyBind(Key.UP_ARROW, { ModifierKey.CONTROL, ModifierKey.SHIFT }, fn)
+```
+
+**Fix:** Never use the 2-arg form. Do not bind `Key.ADD` / `OEM_PLUS` unless proven. MiniMap zoom is **Ctrl+Shift+Up/Down**.
+
+---
+
+## 16. Lua tables are not `TArray` (CRITICAL)
+
+**Symptom:** Fatal a few seconds after the mini-map appears. Dump may mention `SetMapCaptureHiddenActors`.
+
+**Cause:** `cap:SetMapCaptureHiddenActors({ pawn })` or `sc.HiddenActors = { pawn }`. UE4SS does not marshal a Lua table into `TArray<AActor*>`.
+
+**Fix:** Do not pass Lua `{ }` as Blueprint array args. Let `HandleMapOpened` own capture hiding.
+
+---
+
+## 17. `LoopAsync` is not the game thread (CRITICAL)
+
+**Symptom:** Fatal during play; or `[UE4SS.EngineTick] Ref was not function` and the overlay never rebuilds.
+
+**Cause:**
+
+- `CaptureNow` / `AddToViewport` / `CreateWidget` from `LoopAsync` (async thread)
+- `ExecuteInGameThread(function() ... end)` **every pulse** — the anonymous fn is GC’d and EngineTick dies
+
+**Fix:** One **stable** local `GameTick`, queue it:
+
+```lua
+local pending = false
+local function GameTick()
+    pending = false
+    pcall(Tick)  -- all UObject work here
+end
+LoopAsync(ms, function()
+    if pending then return false end
+    pending = true
+    ExecuteInGameThread(GameTick)
+    return false
+end)
+```
+
+Wait for `PC_Standard` + live `W_HUD` before `CreateWidget` (main menu / loading widgets die).
+
+---
+
+## 18. Mini-map widget tree (visibility / gray bar)
+
+**Symptom:** Gray slider column; or hiding “chrome” deletes the whole map.
+
+**Cause:** `W_Element_MapImage` is the **tablet map**, not a HUD square.
+
+- **BindWidgets** (work with `widget.Image_Map`): `Image_Map`, `Canvas_MapViewport`, `MapZoomSlider`, `Image_256`, `PlayerIconCanvas`, `Canvas_MapMarkers`, …
+- **WidgetTree-only** (`Named()` returns MISSING): `CanvasPanelRoot`, `Border`, `SizeBox_98` — find via `Canvas_MapViewport:GetParent()` / `GetChildAt`
+- Collapsing **`Border`** or **`SizeBox_98` by guess** hid the map when they wrapped it. Live dump: map chain is `Image_Map` → `Canvas_MapContent` → `Canvas_MapViewport` → `CanvasPanelRoot`. SizeBox is a **sibling**, not an ancestor — then it is safe to collapse via children walk.
+- SOS is `Marker_Rescue` / `Image_Rescue` on `PlayerIconCanvas`
+- Overhead **scene capture** draws the 3D pawn from above (looks “fallen apart”). Tablet uses `W_MapMarker_Player` and hides the pawn from capture — do not fake that with a Lua `TArray`
+
+**Fix:** `minimap_dump` logs vis + parent. Hide slider/`Image_256` only; keep `Image_Map` ancestors; walk root children for SizeBox.
+
+Parent overlay to **`W_HUD.ConstantHud`** using the **slot `AddChild` returns**. `AddToViewport` from Lua often creates an object that never paints.
+
+Do not `CreateWidget` extra `W_Element_Button` / `SetButtonContent` (Fatal).
+
+---
+
+## 19. ShowingCursor is not “tablet open”
+
+**Symptom:** Mini-map created then immediately `Paused: tablet open`.
+
+**Cause:** Console / cursor sets `ShowingCursor`. Auto-hide treated that as the tablet.
+
+**Fix:** Don’t hide on cursor. If needed, use `W_InGameMenu.VisibleBackground`. MiniMapMod does not auto-hide.
+
+---
+
+## 20. Flooring auto MaxSpeedLimit (vehicles)
+
+**Symptom:** Grader surge; excavator superspeed; roller oscillation.
+
+**Cause:** Writing `MaxSpeedLimit = 80` (or similar) when XML/gears use **auto** (0 / negative).
+
+**Fix:** Skip auto cap writes; scale gears only. Do not stack VehicleSpeedMod + VehicleTuneMod.
+
+---
+
 ## Recovery checklist
 
 1. Disable suspect mod (`: 0` or `enable 0`)  
 2. Restart game  
 3. If world broken: older save  
-4. Last resort: remove `dwmapi.dll`, Steam verify, reinstall UE4SS from kit  
+4. Last resort: remove `dwmapi.dll`, Steam verify, reinstall UE4SS from kit v1.2.0  
+

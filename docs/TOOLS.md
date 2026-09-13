@@ -53,8 +53,8 @@ mods/
 
 | Item | Path |
 |------|------|
-| Share zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.0.zip` |
-| Kit folder | `...\dist\OutOfOre-Modding-Kit-v1.0\` |
+| Share zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip` |
+| Kit folder | `...\dist\OutOfOre-Modding-Kit-v1.2.0\` |
 | Installer EXE | `Install Out of Ore Mods.exe` (must sit next to `payload\`) |
 | Desktop shortcut | **Install Out of Ore Mods** |
 
@@ -68,15 +68,17 @@ payload\
     OutOfOreModManager.exe
     packs\
   Optional\
-    StarterCustomMods.ooomod
+    MiniMapMod.ooomod     # installer checkbox (off by default)
 ```
+
+Installer checkbox **Install MiniMapMod (optional HUD mini-map)** unpacks that pack into `UE4SS\Mods`. If skipped, the same file is still copied to `OutOfOreModManager\packs\` for later Unpack. Dirt/speed are **not** in Optional.
 
 ### Friend install steps
 
 1. Own Out of Ore on Steam  
 2. Run **Install Out of Ore Mods.exe**  
 3. Select `...\steamapps\common\OutofOre`  
-4. Install UE4SS + Manager (+ optional starter pack)  
+4. Install UE4SS + Manager (optional: check MiniMapMod)  
 5. Launch game; verify `UE4SS.log`  
 
 **Friends do not need Python.**
