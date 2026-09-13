@@ -1,8 +1,10 @@
-﻿# mods/ (public repo)
+# mods/
 
-This public repository is **loader-only**.
+Optional UE4SS Lua mods you can copy into `OutOfOre\Binaries\Win64\UE4SS\Mods\`.
 
-Gameplay mods live in the **private** repo:
+| Folder | What it is |
+|--------|------------|
+| **MiniMapMod** | HUD mini-map (also a [GitHub Release asset](https://github.com/tonyoo/out-of-ore-modding/releases)) |
+
+Other gameplay mods (dirt, speed, tune, etc.) stay in the **private** repo:  
 https://github.com/tonyoo/out-of-ore-gameplay-mods
-
-(DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod)

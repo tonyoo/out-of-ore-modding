@@ -24,7 +24,9 @@ No Python required for end users.
 | OutOfOreModManager.exe | Enable/disable mods, pack/unpack `.ooomod` |
 | Stock UE4SS tools | Console enabler, keybinds, BPModLoader, etc. |
 
-**Not included:** DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod.
+**Optional extra:** [MiniMapMod](mods/MiniMapMod) — HUD mini-map. Also attached as a **Release asset** (`MiniMapMod.ooomod` / `MiniMapMod.zip`).
+
+**Not included in the loader zip:** DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod (private repo).
 
 ## For developers
 
@@ -33,7 +35,7 @@ No Python required for end users.
 | `tools/mod-manager/` | Manager source + `build_exe.bat` + **`Rebuild All.bat`** |
 | `tools/installer/` | Installer source + `assemble_kit.ps1` |
 | `docs/` | AI/human handoff guides |
-| `mods/` | Empty on purpose (loader-only) |
+| `mods/` | Optional public mods (currently MiniMapMod) |
 
 ### Rebuild manager + installer + kit
 
