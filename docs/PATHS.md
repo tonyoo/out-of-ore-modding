@@ -99,8 +99,8 @@ Stock UE4SS (keep):
 | Manager EXE | `...\OutOfOreModManager\OutOfOreModManager.exe` |
 | Manager source | `...\OutOfOreModManager\ooo_mod_manager.py` |
 | Installer source | `...\OutOfOreModManager\ooo_mod_installer.py` |
-| Share kit zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip` |
-| Kit folder | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0\` |
+| Share kit zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.3.0.zip` |
+| Kit folder | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.3.0\` |
 | Rebuild kit | `...\OutOfOreModManager\Rebuild Kit.bat` |
 | Assemble script | `...\OutOfOreModManager\assemble_kit.ps1` |
 

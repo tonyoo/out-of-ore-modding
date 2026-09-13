@@ -53,8 +53,9 @@ mods/
 
 | Item | Path |
 |------|------|
-| Share zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip` |
-| Kit folder | `...\dist\OutOfOre-Modding-Kit-v1.2.0\` |
+| Share zip | `...\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.3.0.zip` |
+| Kit folder | `...\dist\OutOfOre-Modding-Kit-v1.3.0\` |
+| Extra GitHub assets | `...\dist\MiniMapMod.ooomod` (and any other `payload\Optional\*.ooomod`) |
 | Installer EXE | `Install Out of Ore Mods.exe` (must sit next to `payload\`) |
 | Desktop shortcut | **Install Out of Ore Mods** |
 

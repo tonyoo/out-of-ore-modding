@@ -248,5 +248,5 @@ Do not `CreateWidget` extra `W_Element_Button` / `SetButtonContent` (Fatal).
 1. Disable suspect mod (`: 0` or `enable 0`)  
 2. Restart game  
 3. If world broken: older save  
-4. Last resort: remove `dwmapi.dll`, Steam verify, reinstall UE4SS from kit v1.2.0  
+4. Last resort: remove `dwmapi.dll`, Steam verify, reinstall UE4SS from kit v1.3.0  
 

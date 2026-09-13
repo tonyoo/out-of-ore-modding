@@ -12,7 +12,10 @@ git commit -m "your message"
 git push
 ```
 
-New release example:
+New loader release — attach the kit zip **and** each optional `.ooomod` as Release assets:
 ```powershell
-gh release create v1.1.0 path\to\OutOfOre-Modding-Kit.zip --title "v1.1.0" --notes "..."
+gh release create v1.3.0 `
+  path\to\OutOfOre-Modding-Kit-v1.3.0.zip `
+  path\to\MiniMapMod.ooomod `
+  --title "v1.3.0" --notes "Loader + MiniMapMod.ooomod"
 ```

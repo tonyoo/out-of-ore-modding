@@ -30,7 +30,7 @@ Mod **Out of Ore** (Steam) using **UE4SS Lua**. Prior work includes:
 | Branch | `main` (both) |
 
 **Public kit never packages VehicleSpeed / BlueprintDump.** DirtCapacityMod and VehicleTuneMod are **abandoned; do not restore.**  
-**MiniMapMod is the exception:** source in `mods/MiniMapMod`, optional kit payload (`v1.2.0`).  
+**MiniMapMod is the exception:** source in `mods/MiniMapMod`, optional kit payload, and a GitHub Release **asset** (`MiniMapMod.ooomod`).  
 Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` for testing).
 
 ### After each change (required)
@@ -69,7 +69,10 @@ git push origin main
 - Publish **loader-only** kit (no gameplay mods):
 
 ```powershell
-gh release create v1.2.0 "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.2.0.zip" --repo tonyoo/out-of-ore-modding --title "v1.2.0" --notes "Loader + optional MiniMapMod"
+gh release create v1.3.0 `
+  "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\OutOfOre-Modding-Kit-v1.3.0.zip" `
+  "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOreModManager\dist\MiniMapMod.ooomod" `
+  --repo tonyoo/out-of-ore-modding --title "v1.3.0" --notes "Loader kit + MiniMapMod.ooomod asset"
 ```
 
 ### Do not

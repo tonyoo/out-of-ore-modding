@@ -7,7 +7,7 @@ $GameRoot = Split-Path -Parent $Root
 $Win64 = Join-Path $GameRoot "OutOfOre\Binaries\Win64"
 $UE4SS = Join-Path $Win64 "UE4SS"
 $Dist = Join-Path $Root "dist"
-$KitName = "OutOfOre-Modding-Kit-v1.2.0"
+$KitName = "OutOfOre-Modding-Kit-v1.3.0"
 $KitDir = Join-Path $Dist $KitName
 $Payload = Join-Path $KitDir "payload"
 
@@ -166,7 +166,7 @@ Copy-Item $InstExe (Join-Path $KitDir "Install Out of Ore Mods.exe") -Force
 
 # README for end users
 @"
-Out of Ore Modding Kit v1.2.0
+Out of Ore Modding Kit v1.3.0
 =============================
 
 WHAT THIS INSTALLS
@@ -218,8 +218,23 @@ $zipOut = Join-Path $Dist "$KitName.zip"
 if (Test-Path $zipOut) { Remove-Item $zipOut -Force }
 Compress-Archive -Path $KitDir -DestinationPath $zipOut -Force
 
+# Copy optional .ooomod next to the kit zip so GitHub Release can attach them as extra assets
+$optDir = Join-Path $Payload "Optional"
+$assetArgs = @()
+if (Test-Path $optDir) {
+    Get-ChildItem $optDir -Filter "*.ooomod" | ForEach-Object {
+        $dest = Join-Path $Dist $_.Name
+        Copy-Item $_.FullName $dest -Force
+        $assetArgs += $dest
+        Write-Host "Release asset: $dest"
+    }
+}
+
 Write-Host ""
 Write-Host "=== DONE ==="
 Write-Host "Kit folder: $KitDir"
 Write-Host "Zip:        $zipOut"
 Get-Item $zipOut | Format-List FullName, Length, LastWriteTime
+Write-Host "GitHub Release (kit zip + ooomod assets):"
+$ghFiles = @($zipOut) + $assetArgs
+Write-Host ('gh release create v1.3.0 ' + (($ghFiles | ForEach-Object { '"' + $_ + '"' }) -join ' ') + ' --repo tonyoo/out-of-ore-modding --title "v1.3.0" --notes "Loader + optional MiniMapMod.ooomod asset"')

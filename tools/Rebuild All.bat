@@ -32,7 +32,7 @@ echo ============================================
 echo  DONE
 echo  EXEs:  dist\OutOfOreModManager.exe
 echo         dist\Install Out of Ore Mods.exe
-echo  Kit:   dist\OutOfOre-Modding-Kit-v1.2.0.zip
+echo  Kit:   dist\OutOfOre-Modding-Kit-v1.3.0.zip
 echo ============================================
 pause
 exit /b 0

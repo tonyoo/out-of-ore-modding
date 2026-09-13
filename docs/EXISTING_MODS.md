@@ -15,11 +15,11 @@ Always re-read live `mods.txt` — it changes.
 | Path | `mods/MiniMapMod` (this repo) / live `UE4SS\Mods\MiniMapMod` / private clone |
 | Config | `Scripts/config.lua` → `MiniMapConfig` |
 | Goal | HUD mini-map using the game’s own capture (`W_Element_MapImage` + `Map_Component` + `BP_MapCaptureActor`) |
-| Kit | **v1.2.0** optional payload (`payload/Optional/MiniMapMod.ooomod`) |
+| Kit | **v1.3.0** optional payload + GitHub Release asset `MiniMapMod.ooomod` |
 
 **Do not** drop Palworld `DekBasicMinimap_P.pak` into `Content\Paks\LogicMods` (UE5 Palworld pack; will not load on 4.27).
 
-**Install (players):** kit installer checkbox **Install MiniMapMod**, or Mod Manager → Unpack `packs\MiniMapMod.ooomod`. Release: https://github.com/tonyoo/out-of-ore-modding/releases/tag/v1.2.0
+**Install (players):** kit installer checkbox **Install MiniMapMod**, Mod Manager → Unpack `packs\MiniMapMod.ooomod`, or download `MiniMapMod.ooomod` from the [latest Release assets](https://github.com/tonyoo/out-of-ore-modding/releases/latest).
 
 **Commands:** `minimap`, `minimap_enable 0|1`, `minimap_size`, `minimap_pos`, `minimap_corner`, `minimap_zoom`, `minimap_zoom_step`, `minimap_zoom_in`, `minimap_zoom_out`, `minimap_dump`, `minimap_reload`, `minimap_help`
 

@@ -9,7 +9,7 @@ UE4SS install helpers and a desktop **Mod Manager** for [Out of Ore](https://sto
 1. Install **Out of Ore** from Steam (launch once).  
 2. Download the latest **Release**:  
    **https://github.com/tonyoo/out-of-ore-modding/releases/latest**  
-   (asset: `OutOfOre-Modding-Kit-v1.2.0.zip`)  
+   (assets: `OutOfOre-Modding-Kit-v1.3.0.zip` + `MiniMapMod.ooomod`)  
 3. Run **`Install Out of Ore Mods.exe`**  
 4. Select `...\steamapps\common\OutofOre`  
 5. Install → open **Out of Ore Mod Manager** → launch game  
