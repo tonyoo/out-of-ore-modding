@@ -44,15 +44,13 @@ Parent the overlay to `W_HUD.ConstantHud` with the **slot returned by `AddChild`
 
 | Mod | Role |
 |-----|------|
-| DirtCapacityMod | Bucket + terrain + weight |
 | VehicleSpeedMod | Speed / gears (do not floor auto MaxSpeedLimit to 80) |
-| VehicleTuneMod | Per-type speed / hyd / size / capacity |
 | VehicleScaleMod | Scale |
 | GpsAssistMod | GPS → blade |
 | DevMenuMod | Unhide tablet Dev / Building XML / Terraform tab |
 | BlueprintDumpMod | Runtime BP dumps |
 
-**Do not recreate** RoleStoreMod or StoreUnlockAll.
+**Do not recreate** DirtCapacityMod, VehicleTuneMod, RoleStoreMod, or StoreUnlockAll.
 
 Dev Menu: tablet **I**; commands `devmenu`, `devmenu_building`, `devmenu_terraform`. Terraform tab is vehicle XML DigComp (CanCut, cutbox, …), not world paint. Saving XML from Dev can persist broken machines.
 

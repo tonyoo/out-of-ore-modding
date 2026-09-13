@@ -239,7 +239,7 @@ Do not `CreateWidget` extra `W_Element_Button` / `SetButtonContent` (Fatal).
 
 **Cause:** Writing `MaxSpeedLimit = 80` (or similar) when XML/gears use **auto** (0 / negative).
 
-**Fix:** Skip auto cap writes; scale gears only. Do not stack VehicleSpeedMod + VehicleTuneMod.
+**Fix:** Skip auto cap writes; scale gears only. Do not stack speed mods. **VehicleTuneMod is abandoned; do not restore.**
 
 ---
 

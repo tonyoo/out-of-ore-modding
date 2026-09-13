@@ -80,11 +80,11 @@ Base: `...\UE4SS\Mods\`
 | Mod folder | Typical role |
 |------------|----------------|
 | `VehicleSpeedMod` | Speed / gears (private) |
-| `DirtCapacityMod` | Bucket capacity + terrain + weight (private) |
+| `DirtCapacityMod` | **Abandoned; do not restore** |
 | `BlueprintDumpMod` | Runtime BP dumps (private) |
 | `MiniMapMod` | HUD mini-map (**public** optional kit payload) |
 | `DevMenuMod` | Unhide Dev / Building XML / Terraform tab (private) |
-| `VehicleTuneMod` | Per-type speed / hyd / size / capacity (private) |
+| `VehicleTuneMod` | **Abandoned; do not restore** |
 | `RoleStoreMod` | **Removed** (do not recreate unless asked) |
 
 Stock UE4SS (keep):  

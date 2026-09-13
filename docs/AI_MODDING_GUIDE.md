@@ -29,7 +29,7 @@ Mod **Out of Ore** (Steam) using **UE4SS Lua**. Prior work includes:
 | Private monorepo (gameplay mods) | `D:\OpenCode\out-of-ore-gameplay-mods` → https://github.com/tonyoo/out-of-ore-gameplay-mods |
 | Branch | `main` (both) |
 
-**Public kit never packages DirtCapacity / VehicleSpeed / BlueprintDump.**  
+**Public kit never packages VehicleSpeed / BlueprintDump.** DirtCapacityMod and VehicleTuneMod are **abandoned; do not restore.**  
 **MiniMapMod is the exception:** source in `mods/MiniMapMod`, optional kit payload (`v1.2.0`).  
 Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` for testing).
 
@@ -40,7 +40,7 @@ Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` fo
 ```powershell
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
 $priv = "D:\OpenCode\out-of-ore-gameplay-mods"
-foreach ($m in @("DirtCapacityMod","VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod","VehicleTuneMod","DevMenuMod","MiniMapMod")) {
+foreach ($m in @("VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod","DevMenuMod","MiniMapMod")) {
   if (Test-Path "$gameMods\$m") {
     Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
@@ -217,13 +217,13 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 
 | Mod | Status | Config / commands |
 |-----|--------|-------------------|
-| **DirtCapacityMod** | Private gameplay | `dirtcap_*` — capacity + terrain + weight |
 | **VehicleSpeedMod** | Private gameplay | `vehiclespeed_*` — props + gear scale |
 | **BlueprintDumpMod** | Research | `bpdump_*` |
 | **GpsAssistMod** | Private gameplay | `gpsassist_*` — GPS height/angle → blade keys |
-| **VehicleTuneMod** | Private gameplay | `vehicletune_*` — per-type speed / hyd / size / capacity |
 | **DevMenuMod** | Private gameplay | `devmenu_*` — unhide Dev / Building XML / Terraform tab |
 | **MiniMapMod** | **Public optional** | `minimap_*` — HUD overlay of stock map capture |
+| **DirtCapacityMod** | **Deleted** | Abandoned; do not restore |
+| **VehicleTuneMod** | **Deleted** | Abandoned; do not restore |
 | **StoreUnlockAll** | **Deleted** | Abandoned; do not restore |
 | **RoleStoreMod** | **Deleted** | Do not restore |
 
@@ -294,11 +294,6 @@ See `TOOLS.md`.
 ---
 
 ## 11. Useful console commands (custom)
-
-### DirtCapacityMod
-
-- `dirtcap_status` / `dirtcap_apply` / `dirtcap_preset double|huge|vanilla`  
-- `dirtcap_reload` / `dirtcap_enable 0|1` / `dirtcap_reset`  
 
 ### VehicleSpeedMod
 

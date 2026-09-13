@@ -26,7 +26,7 @@ No Python required for end users.
 
 **Optional extra:** MiniMapMod (HUD mini-map). Check **Install MiniMapMod** in the installer, or unpack `MiniMapMod.ooomod` from Mod Manager → packs. Source: [mods/MiniMapMod](mods/MiniMapMod).
 
-**Not included in the loader zip:** DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod (private repo).
+**Not included in the loader zip:** VehicleSpeedMod, BlueprintDumpMod (private). DirtCapacityMod and VehicleTuneMod are **abandoned; do not restore.**
 
 ## For developers
 

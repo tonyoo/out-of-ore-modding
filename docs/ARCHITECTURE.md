@@ -139,7 +139,7 @@ BPML_GenericFunctions : 1
 BPModLoaderMod : 1
 Keybinds : 1
 VehicleSpeedMod : 1
-DirtCapacityMod : 1
+MiniMapMod : 1
 ```
 
 ## Distribution architecture
