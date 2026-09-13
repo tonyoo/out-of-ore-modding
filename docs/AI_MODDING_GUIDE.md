@@ -40,7 +40,7 @@ Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` fo
 ```powershell
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
 $priv = "D:\OpenCode\out-of-ore-gameplay-mods"
-foreach ($m in @("VehicleSpeedMod","BlueprintDumpMod","GpsAssistMod","VehicleScaleMod","DevMenuMod","MiniMapMod")) {
+foreach ($m in @("VehicleSpeedMod","BlueprintDumpMod","VehicleScaleMod","DevMenuMod","MiniMapMod")) {
   if (Test-Path "$gameMods\$m") {
     Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
@@ -219,9 +219,9 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 |-----|--------|-------------------|
 | **VehicleSpeedMod** | Private gameplay | `vehiclespeed_*` — props + gear scale |
 | **BlueprintDumpMod** | Research | `bpdump_*` |
-| **GpsAssistMod** | Private gameplay | `gpsassist_*` — GPS height/angle → blade keys |
 | **DevMenuMod** | Private gameplay | `devmenu_*` — unhide Dev / Building XML / Terraform tab |
 | **MiniMapMod** | **Public optional** | `minimap_*` — HUD overlay of stock map capture |
+| **GpsAssistMod** | **Abandoned** | Do not restore as active; **keep GitHub files** |
 | **DirtCapacityMod** | **Deleted** | Abandoned; do not restore |
 | **VehicleTuneMod** | **Deleted** | Abandoned; do not restore |
 | **StoreUnlockAll** | **Deleted** | Abandoned; do not restore |
@@ -303,12 +303,6 @@ See `TOOLS.md`.
 ### BlueprintDumpMod (if enabled)
 
 - `bpdump_game` / `bpdump_detail ClassName` / `bpdump_actors` / `bpdump_help`  
-
-### GpsAssistMod
-
-- `gpsassist_status` / `gpsassist_probe` / `gpsassist_enable 0|1`  
-- `gpsassist_axes height|angle|both` / `gpsassist_logonly 0|1`  
-- `gpsassist_deadzone_height` / `gpsassist_deadzone_angle` / `gpsassist_reload`  
 
 ### Stock
 

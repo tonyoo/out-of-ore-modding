@@ -85,6 +85,7 @@ Base: `...\UE4SS\Mods\`
 | `MiniMapMod` | HUD mini-map (**public** optional kit payload) |
 | `DevMenuMod` | Unhide Dev / Building XML / Terraform tab (private) |
 | `VehicleTuneMod` | **Abandoned; do not restore** |
+| `GpsAssistMod` | **Abandoned** (keep GitHub files; do not restore as active) |
 | `RoleStoreMod` | **Removed** (do not recreate unless asked) |
 
 Stock UE4SS (keep):  
