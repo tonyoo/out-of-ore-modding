@@ -9,7 +9,7 @@ UE4SS install helpers and a desktop **Mod Manager** for [Out of Ore](https://sto
 1. Install **Out of Ore** from Steam (launch once).  
 2. Download the latest **Release**:  
    **https://github.com/tonyoo/out-of-ore-modding/releases/latest**  
-   (asset: `OutOfOre-Modding-Kit-v1.1.0.zip`)  
+   (asset: `OutOfOre-Modding-Kit-v1.2.0.zip`)  
 3. Run **`Install Out of Ore Mods.exe`**  
 4. Select `...\steamapps\common\OutofOre`  
 5. Install → open **Out of Ore Mod Manager** → launch game  
@@ -24,7 +24,7 @@ No Python required for end users.
 | OutOfOreModManager.exe | Enable/disable mods, pack/unpack `.ooomod` |
 | Stock UE4SS tools | Console enabler, keybinds, BPModLoader, etc. |
 
-**Optional extra:** [MiniMapMod](mods/MiniMapMod) — HUD mini-map. Also attached as a **Release asset** (`MiniMapMod.ooomod` / `MiniMapMod.zip`).
+**Optional extra:** MiniMapMod (HUD mini-map). Check **Install MiniMapMod** in the installer, or unpack `MiniMapMod.ooomod` from Mod Manager → packs. Source: [mods/MiniMapMod](mods/MiniMapMod).
 
 **Not included in the loader zip:** DirtCapacityMod, VehicleSpeedMod, BlueprintDumpMod (private repo).
 

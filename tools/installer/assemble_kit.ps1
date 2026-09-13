@@ -7,7 +7,7 @@ $GameRoot = Split-Path -Parent $Root
 $Win64 = Join-Path $GameRoot "OutOfOre\Binaries\Win64"
 $UE4SS = Join-Path $Win64 "UE4SS"
 $Dist = Join-Path $Root "dist"
-$KitName = "OutOfOre-Modding-Kit-v1.1.0"
+$KitName = "OutOfOre-Modding-Kit-v1.2.0"
 $KitDir = Join-Path $Dist $KitName
 $Payload = Join-Path $KitDir "payload"
 
@@ -118,24 +118,64 @@ if (Test-Path (Join-Path $Root "README.md")) {
     Copy-Item (Join-Path $Root "README.md") (Join-Path $Payload "ModManager\README.md") -Force
 }
 
-# LOADER KIT ONLY — do NOT package gameplay mods (DirtCapacity, VehicleSpeed, etc.)
-# Those live in the private repo: tonyoo/out-of-ore-gameplay-mods
-Write-Host "Skipping custom gameplay packs (loader-only kit)."
+# Optional MiniMapMod pack — installer checkbox, not enabled by default.
+# Dirt/speed/tune stay in the private repo.
+$miniSrc = $null
+foreach ($c in @(
+        (Join-Path $Root "optional_mods\MiniMapMod"),
+        "D:\OpenCode\out-of-ore-modding\mods\MiniMapMod",
+        (Join-Path $modsSrc "MiniMapMod")
+    )) {
+    if (Test-Path (Join-Path $c "Scripts\main.lua")) { $miniSrc = $c; break }
+}
+if ($miniSrc) {
+    $stage = Join-Path $Dist "_minimap_pack"
+    if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path (Join-Path $stage "mods\MiniMapMod\Scripts") | Out-Null
+    Copy-Item (Join-Path $miniSrc "Scripts\*") (Join-Path $stage "mods\MiniMapMod\Scripts\") -Force
+    $miniReadme = Join-Path $miniSrc "README.md"
+    if (Test-Path $miniReadme) {
+        Copy-Item $miniReadme (Join-Path $stage "mods\MiniMapMod\README.md") -Force
+    }
+    @"
+{
+  "format": "outofore-modpack",
+  "format_version": 1,
+  "name": "MiniMapMod",
+  "author": "tonyoo",
+  "description": "HUD mini-map (optional)",
+  "mods": [ { "name": "MiniMapMod", "enabled": true } ]
+}
+"@ | Set-Content (Join-Path $stage "manifest.json") -Encoding UTF8
+    @"
+MiniMapMod — optional HUD mini-map for Out of Ore.
+Install via the installer checkbox, or Mod Manager → Unpack packs\MiniMapMod.ooomod
+"@ | Set-Content (Join-Path $stage "README.txt") -Encoding UTF8
+    $zipTmp = Join-Path $Dist "MiniMapMod.zip"
+    if (Test-Path $zipTmp) { Remove-Item $zipTmp -Force }
+    Compress-Archive -Path "$stage\*" -DestinationPath $zipTmp -Force
+    Copy-Item $zipTmp (Join-Path $Payload "Optional\MiniMapMod.ooomod") -Force
+    Copy-Item $zipTmp (Join-Path $Payload "ModManager\packs\MiniMapMod.ooomod") -Force
+    Write-Host "Packed optional MiniMapMod.ooomod from $miniSrc"
+} else {
+    Write-Host "WARNING: MiniMapMod source not found — Optional pack skipped"
+}
 
 # Installer EXE at kit root
 Copy-Item $InstExe (Join-Path $KitDir "Install Out of Ore Mods.exe") -Force
 
 # README for end users
 @"
-Out of Ore Modding Kit v1.1.0 (LOADER ONLY)
-==========================================
+Out of Ore Modding Kit v1.2.0
+=============================
 
 WHAT THIS INSTALLS
 - UE4SS (mod loader runtime for Unreal games)
 - Out of Ore Mod Manager (GUI .exe, no Python needed)
+- Optional: MiniMapMod (HUD mini-map) — check the box in the installer,
+  or later: Mod Manager → Unpack → packs\MiniMapMod.ooomod
 
-This kit does NOT include gameplay mods (dirt capacity, vehicle speed, etc.).
-Those are distributed separately (private).
+Dirt / speed / other gameplay mods are NOT in this kit (private).
 
 REQUIREMENTS
 - Out of Ore installed via Steam

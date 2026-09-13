@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 echo ============================================
 echo  Out of Ore — Rebuild Manager + Installer + Kit
-echo  (Loader only — NO gameplay mods packaged)
+echo  (Loader + optional MiniMapMod pack)
 echo ============================================
 echo.
 
@@ -32,7 +32,7 @@ echo ============================================
 echo  DONE
 echo  EXEs:  dist\OutOfOreModManager.exe
 echo         dist\Install Out of Ore Mods.exe
-echo  Kit:   dist\OutOfOre-Modding-Kit-v1.1.0.zip
+echo  Kit:   dist\OutOfOre-Modding-Kit-v1.2.0.zip
 echo ============================================
 pause
 exit /b 0

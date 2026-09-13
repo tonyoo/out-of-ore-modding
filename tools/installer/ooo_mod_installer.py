@@ -24,7 +24,7 @@ except ImportError as e:
 
 
 APP_NAME = "Out of Ore Modding Setup"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.2.0"
 
 
 def app_dir() -> Path:
@@ -139,7 +139,7 @@ class InstallerApp(tk.Tk):
         )
         self.opt_ue4ss = tk.BooleanVar(value=True)
         self.opt_manager = tk.BooleanVar(value=True)
-        self.opt_starter = tk.BooleanVar(value=False)  # loader kit has no gameplay packs
+        self.opt_starter = tk.BooleanVar(value=False)  # MiniMapMod optional payload
         self.opt_shortcut = tk.BooleanVar(value=True)
 
         self._build_ui()
@@ -186,12 +186,12 @@ class InstallerApp(tk.Tk):
         ).pack(anchor=tk.W)
         ttk.Checkbutton(
             opts,
-            text="Install optional pack from payload/Optional (if present)",
+            text="Install MiniMapMod (optional HUD mini-map)",
             variable=self.opt_starter,
         ).pack(anchor=tk.W)
         ttk.Label(
             opts,
-            text="Default kit is loader-only (no dirt/speed gameplay mods).",
+            text="Unchecked = loader only. MiniMapMod also lands in Mod Manager → packs.",
             foreground="#555",
         ).pack(anchor=tk.W)
         ttk.Checkbutton(
@@ -430,19 +430,28 @@ class InstallerApp(tk.Tk):
             if src.is_file():
                 shutil.copy2(src, dest_dir / name)
 
+        packs_src = mgr_src_dir / "packs"
+        if packs_src.is_dir():
+            dest_packs = dest_dir / "packs"
+            dest_packs.mkdir(exist_ok=True)
+            for p in list(packs_src.glob("*.ooomod")) + list(packs_src.glob("*.zip")):
+                shutil.copy2(p, dest_packs / p.name)
+                self.log(f"  pack available later: {p.name}")
+
         self.log(f"Installed Mod Manager → {dest_exe}")
 
     def _install_starter_pack(self, payload: Path, ue4ss_dst: Path) -> None:
         opt = payload / "Optional"
         packs = list(opt.glob("*.ooomod")) + list(opt.glob("*.zip")) if opt.is_dir() else []
-        # also packs next to manager
-        packs += list((payload / "ModManager" / "packs").glob("*.ooomod"))
+        named = [p for p in packs if p.name.lower().startswith("minimap")]
+        if named:
+            packs = named
         if not packs:
-            self.log("No starter pack found (skipped).")
+            self.log("No optional MiniMapMod pack found (skipped).")
             return
 
         pack = packs[0]
-        self.log(f"Installing starter pack: {pack.name}")
+        self.log(f"Installing optional pack: {pack.name}")
         mods_dir = ue4ss_dst / "Mods"
         mods_dir.mkdir(parents=True, exist_ok=True)
 
