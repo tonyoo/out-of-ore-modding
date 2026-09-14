@@ -37,6 +37,27 @@ Parent the overlay to `W_HUD.ConstantHud` with the **slot returned by `AddChild`
 
 ---
 
+### MapExportMod ✅ (private)
+
+| | |
+|--|--|
+| Path | private repo + live `UE4SS\Mods\MapExportMod` |
+| Config | `Scripts/config.lua` → `MapExportConfig` |
+| Goal | Capture the tablet map RT and write an image |
+
+**Not in the public loader kit** (private gameplay repo only).
+
+**Commands:** `mapsave` (one 4096px shot), `mapsave_atlas` (tiled stitch), `mapsave_zoom`, `mapsave_res`, `mapsave_reload`, `mapsave_help`  
+**Key:** Ctrl+Shift+P = single shot  
+
+**Atlas:** tiles abut using `MapBounds` AABB, SOS-centered (`center_on_sos`), stitch with `tile_0_0` **bottom-left**, output **only** `map_atlas.jpg` (JPEG), then delete `tile_*.png`. Folder: `Binaries\Win64\map_exports\<YYYYMMDD_HHMMSS>\`
+
+**Config:** `out_dir`, `zoom`, `resolution`, `tile_zoom`, `tile_resolution`, `atlas_max_tiles`, `center_on_sos`
+
+Do not pass Lua tables as `TArray` to `SetMapCaptureHiddenActors`. Capture on the game thread.
+
+---
+
 ## Private (not in this loader)
 
 **Repo:** https://github.com/tonyoo/out-of-ore-gameplay-mods  
@@ -48,6 +69,7 @@ Parent the overlay to `W_HUD.ConstantHud` with the **slot returned by `AddChild`
 | VehicleScaleMod | Scale |
 | DevMenuMod | Unhide tablet Dev / Building XML / Terraform tab |
 | BlueprintDumpMod | Runtime BP dumps |
+| MapExportMod | Map capture → JPEG atlas (`mapsave` / `mapsave_atlas`) |
 
 **Abandoned (do not restore as active):** GpsAssistMod — sources stay on GitHub, do not delete.  
 **Do not recreate** DirtCapacityMod, VehicleTuneMod, RoleStoreMod, or StoreUnlockAll.

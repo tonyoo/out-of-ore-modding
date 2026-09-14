@@ -111,6 +111,8 @@ Tablet **I** → Map uses:
 
 MiniMapMod `CreateWidget`s a **second** `W_Element_MapImage`, parents it to `ConstantHud` (192px slot), hides slider chrome, keeps `Image_Map` + markers. Palworld LogicMods will not work (UE5 vs 4.27).
 
+MapExportMod uses the same `Map_Component` / `BP_MapCaptureActor` to `CaptureNow` + `ExportRenderTarget`, then stitches tiles into `map_atlas.jpg` (`tile_0_0` = bottom-left).
+
 Dev tablet (`W_Menu_Dev`) is collapsed in shipping. `W_Element_Button_Terraform` is a **vehicle XML DigComp tab**, not world terraform.
 
 ## Inventory / containers

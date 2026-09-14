@@ -40,7 +40,7 @@ Other gameplay sources live in the **private** repo (+ live game `UE4SS\Mods` fo
 ```powershell
 $gameMods = "E:\SteamLibrary\steamapps\common\OutofOre\OutOfOre\Binaries\Win64\UE4SS\Mods"
 $priv = "D:\OpenCode\out-of-ore-gameplay-mods"
-foreach ($m in @("VehicleSpeedMod","BlueprintDumpMod","VehicleScaleMod","DevMenuMod","MiniMapMod")) {
+foreach ($m in @("VehicleSpeedMod","BlueprintDumpMod","VehicleScaleMod","DevMenuMod","MiniMapMod","MapExportMod")) {
   if (Test-Path "$gameMods\$m") {
     Remove-Item "$priv\$m" -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$gameMods\$m" "$priv\$m" -Recurse -Force
@@ -224,6 +224,7 @@ Helpers: `require("UEHelpers")` from `Mods\shared\UEHelpers\UEHelpers.lua`.
 | **BlueprintDumpMod** | Research | `bpdump_*` |
 | **DevMenuMod** | Private gameplay | `devmenu_*` — unhide Dev / Building XML / Terraform tab |
 | **MiniMapMod** | **Public optional** | `minimap_*` — HUD overlay of stock map capture |
+| **MapExportMod** | Private gameplay | `mapsave` / `mapsave_atlas` — map RT → JPEG |
 | **GpsAssistMod** | **Abandoned** | Do not restore as active; **keep GitHub files** |
 | **DirtCapacityMod** | **Deleted** | Abandoned; do not restore |
 | **VehicleTuneMod** | **Deleted** | Abandoned; do not restore |
@@ -306,6 +307,11 @@ See `TOOLS.md`.
 ### BlueprintDumpMod (if enabled)
 
 - `bpdump_game` / `bpdump_detail ClassName` / `bpdump_actors` / `bpdump_help`  
+
+### MapExportMod
+
+- `mapsave` / `mapsave_atlas` / `mapsave_zoom <0-1>` / `mapsave_res <px>` / `mapsave_reload` / `mapsave_help`  
+- Atlas writes `map_exports\<timestamp>\map_atlas.jpg` only (tiles deleted after stitch)  
 
 ### Stock
 
