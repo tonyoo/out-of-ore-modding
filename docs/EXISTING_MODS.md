@@ -74,7 +74,7 @@ Do not pass Lua tables as `TArray` to `SetMapCaptureHiddenActors`. Capture on th
 **Abandoned (do not restore as active):** GpsAssistMod — sources stay on GitHub, do not delete.  
 **Do not recreate** DirtCapacityMod, VehicleTuneMod, RoleStoreMod, or StoreUnlockAll.
 
-Dev Menu: tablet **I**; commands `devmenu`, `devmenu_building`, `devmenu_terraform`. Terraform tab is vehicle XML DigComp (CanCut, cutbox, …), not world paint. Saving XML from Dev can persist broken machines.
+Dev Menu: tablet **I**; `devmenu`, `devmenu_building`, `devmenu_terraform`. Extra cooked tools (CreateWidget): `devmenu_orespawn` (`/Game/Widgets/DevMenu` dirt/ore spawn %), `devmenu_paint`, `devmenu_timelapse`, `devmenu_avs`, `devmenu_hyd`, `devmenu_drone`, `devmenu_tools` (all). Saving XML from these screens can persist broken machines.
 
 ---
 
